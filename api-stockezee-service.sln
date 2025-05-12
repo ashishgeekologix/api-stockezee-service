@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api_stockezee_service", "api_stockezee_service\api_stockezee_service.csproj", "{34F81C02-4E33-49CC-9B2D-B9FB2135DE7C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{34F81C02-4E33-49CC-9B2D-B9FB2135DE7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34F81C02-4E33-49CC-9B2D-B9FB2135DE7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34F81C02-4E33-49CC-9B2D-B9FB2135DE7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34F81C02-4E33-49CC-9B2D-B9FB2135DE7C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4CE37237-A593-41F0-96E7-BC0D30D67CA7}
+	EndGlobalSection
+EndGlobal
