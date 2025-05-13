@@ -67,6 +67,7 @@ builder.Services.AddSingleton<PgResourceDbService>();
 
 var app = builder.Build();
 
+
 app.UseResponseCompression();
 
 app.UseHttpsRedirection();
@@ -79,10 +80,20 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapOpenApi();
-app.MapScalarApiReference(op =>
+//app.MapScalarApiReference(op =>
+//{
+//    op
+//    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
+//});
+
+app.MapScalarApiReference(opt =>
 {
-    op
-    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
+    opt.Title = "Scalar Example";
+    opt.Theme = ScalarTheme.Mars;
+    opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.RestSharp);
+    opt.BaseServerUrl = "https://api.stockezee.com";
 });
 
+
 app.Run();
+
