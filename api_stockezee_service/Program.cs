@@ -8,12 +8,23 @@ using StackExchange.Redis;
 var builder = WebApplication.CreateBuilder(args);
 
 //// Add services to the container.
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("CorsPolicy",
+//        builder => builder.AllowAnyOrigin()
+//        .AllowAnyMethod()
+//        .AllowAnyHeader());
+//});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
-        builder => builder.AllowAnyOrigin()
-        .AllowAnyMethod()
-        .AllowAnyHeader());
+         builder =>
+         {
+             builder
+             .SetIsOriginAllowedToAllowWildcardSubdomains()
+             .WithOrigins("http://stockezee.in", "https://stockezee.com", "http://*.stockezee.com", "https://*.stockezee.com", "http://localhost:3005") // Allow specific origins and subdomains
+             .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+         });
 });
 
 
