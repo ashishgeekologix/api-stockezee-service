@@ -1,6 +1,5 @@
 using api_stockezee_service.RedisService;
 using api_stockezee_service.Service;
-using api_stockezee_service.Utility;
 using Microsoft.AspNetCore.ResponseCompression;
 using Npgsql;
 using Scalar.AspNetCore;
@@ -20,15 +19,17 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 
-//builder.Services.AddControllers().AddNewtonsoftJson();
-builder.Services.AddControllers(options =>
-{
-    // Add the custom validation filter globally
-    options.Filters.Add<CustomValidationFilter>();
-}).ConfigureApiBehaviorOptions(options =>
-{
-    options.SuppressModelStateInvalidFilter = true; // Disable default validation response
-}).AddNewtonsoftJson();
+builder.Services.AddControllers().AddNewtonsoftJson();
+
+
+//builder.Services.AddControllers(options =>
+//{
+//    // Add the custom validation filter globally
+//    options.Filters.Add<CustomValidationFilter>();
+//}).ConfigureApiBehaviorOptions(options =>
+//{
+//    options.SuppressModelStateInvalidFilter = true; // Disable default validation response
+//}).AddNewtonsoftJson();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
@@ -80,19 +81,19 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapOpenApi();
-//app.MapScalarApiReference(op =>
-//{
-//    op
-//    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
-//});
-
-app.MapScalarApiReference(opt =>
+app.MapScalarApiReference(op =>
 {
-    opt.Title = "Scalar Example";
-    opt.Theme = ScalarTheme.Mars;
-    opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.RestSharp);
-    opt.BaseServerUrl = "https://api.stockezee.com";
+    op
+    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
 });
+
+//app.MapScalarApiReference(opt =>
+//{
+//    opt.Title = "Scalar Example";
+//    opt.Theme = ScalarTheme.Mars;
+//    opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.RestSharp);
+//    opt.BaseServerUrl = "https://api.stockezee.com";
+//});
 
 
 app.Run();
