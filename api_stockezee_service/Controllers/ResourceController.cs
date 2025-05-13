@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api_stockezee_service.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class ResourceController : ControllerBase
     {

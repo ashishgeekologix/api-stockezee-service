@@ -9,13 +9,13 @@ using StackExchange.Redis;
 var builder = WebApplication.CreateBuilder(args);
 
 //// Add services to the container.
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("CorsPolicy",
-//        builder => builder.AllowAnyOrigin()
-//        .AllowAnyMethod()
-//        .AllowAnyHeader());
-//});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy",
+        builder => builder.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader());
+});
 
 
 // Add services to the container.
@@ -34,7 +34,6 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
            options.Level = System.IO.Compression.CompressionLevel.Optimal);
 builder.Services.AddResponseCompression(option =>
@@ -73,7 +72,7 @@ app.UseResponseCompression();
 app.UseHttpsRedirection();
 
 app.UseRouting();
-//app.UseCors("CorsPolicy");
+app.UseCors("CorsPolicy");
 
 app.UseAuthorization();
 

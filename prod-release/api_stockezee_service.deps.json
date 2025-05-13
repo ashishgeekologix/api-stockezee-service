@@ -12,7 +12,7 @@
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "9.0.4",
           "Microsoft.AspNetCore.OpenApi": "9.0.4",
           "Npgsql": "9.0.3",
-          "Scalar.AspNetCore": "2.1.9",
+          "Scalar.AspNetCore": "2.2.7",
           "StackExchange.Redis": "2.8.37"
         },
         "runtime": {
@@ -119,11 +119,11 @@
           }
         }
       },
-      "Scalar.AspNetCore/2.1.9": {
+      "Scalar.AspNetCore/2.2.7": {
         "runtime": {
           "lib/net9.0/Scalar.AspNetCore.dll": {
-            "assemblyVersion": "2.1.9.0",
-            "fileVersion": "2.1.9.0"
+            "assemblyVersion": "2.2.7.0",
+            "fileVersion": "2.2.7.0"
           }
         }
       },
@@ -232,12 +232,12 @@
       "path": "pipelines.sockets.unofficial/2.2.8",
       "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
     },
-    "Scalar.AspNetCore/2.1.9": {
+    "Scalar.AspNetCore/2.2.7": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-+zVdKQ5V5QRzyADXg51c+MxqC/bNulDipVDMAcZDNXWBWReay7+6IiHKknfbng77UBkpVXZVQPU60Uk2Vg2csA==",
-      "path": "scalar.aspnetcore/2.1.9",
-      "hashPath": "scalar.aspnetcore.2.1.9.nupkg.sha512"
+      "sha512": "sha512-28RhQGPl842ynbFYtpA68HcyhZMxbDBpu7fr2tRjol1jysA8quOh3NTpB+MVtquqbPeDHXxgV9CqCHjpnYXWng==",
+      "path": "scalar.aspnetcore/2.2.7",
+      "hashPath": "scalar.aspnetcore.2.2.7.nupkg.sha512"
     },
     "StackExchange.Redis/2.8.37": {
       "type": "package",
