@@ -1,5 +1,6 @@
 using api_stockezee_service.RedisService;
 using api_stockezee_service.Service;
+using api_stockezee_service.Utility;
 using Microsoft.AspNetCore.ResponseCompression;
 using Npgsql;
 using Scalar.AspNetCore;
@@ -7,40 +8,40 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//// Add services to the container.
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("CorsPolicy",
-//        builder => builder.AllowAnyOrigin()
-//        .AllowAnyMethod()
-//        .AllowAnyHeader());
-//});
+// Add services to the container.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
-         builder =>
-         {
-             builder
-             .SetIsOriginAllowedToAllowWildcardSubdomains()
-             .WithOrigins("http://stockezee.in", "https://stockezee.com", "http://*.stockezee.com", "https://*.stockezee.com", "http://localhost:3005") // Allow specific origins and subdomains
-             .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-         });
+        builder => builder.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader());
 });
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("CorsPolicy",
+//         builder =>
+//         {
+//             builder
+//             .SetIsOriginAllowedToAllowWildcardSubdomains()
+//             .WithOrigins("http://stockezee.in", "https://stockezee.com", "http://*.stockezee.com", "https://*.stockezee.com", "http://localhost:3005") // Allow specific origins and subdomains
+//             .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+//         });
+//});
 
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddNewtonsoftJson();
+//builder.Services.AddControllers().AddNewtonsoftJson();
 
 
-//builder.Services.AddControllers(options =>
-//{
-//    // Add the custom validation filter globally
-//    options.Filters.Add<CustomValidationFilter>();
-//}).ConfigureApiBehaviorOptions(options =>
-//{
-//    options.SuppressModelStateInvalidFilter = true; // Disable default validation response
-//}).AddNewtonsoftJson();
+builder.Services.AddControllers(options =>
+{
+    // Add the custom validation filter globally
+    options.Filters.Add<CustomValidationFilter>();
+}).ConfigureApiBehaviorOptions(options =>
+{
+    options.SuppressModelStateInvalidFilter = true; // Disable default validation response
+}).AddNewtonsoftJson();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
@@ -96,6 +97,7 @@ app.MapScalarApiReference(op =>
 {
     op
     .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
+    op.Theme = ScalarTheme.DeepSpace;
 });
 
 //app.MapScalarApiReference(opt =>
