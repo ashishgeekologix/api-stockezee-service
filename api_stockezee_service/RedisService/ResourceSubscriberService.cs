@@ -34,7 +34,6 @@ namespace api_stockezee_service.RedisService
             // Subscribe to the channel you're interested in
 
 
-            // Bse Option Chain
             await subscriber.SubscribeAsync(RedisChannel.Literal("fii_state_data"), async (channel, message) =>
             {
                 // Handle received message
@@ -46,7 +45,20 @@ namespace api_stockezee_service.RedisService
                     await _bulkInsertService.Fii_State_BulkInsertAsync(entities);
                     Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
                 }
-                //await _dbService.Write_To_DB("save_bse_option_data_daily", "Jobs_Bse_Option_Data_Daily", message);
+
+            });
+
+            await subscriber.SubscribeAsync(RedisChannel.Literal("forthcomming_result"), async (channel, message) =>
+            {
+                // Handle received message
+                message = CompressionHelper.DecompressFromBase64(message);
+                var entities = JsonConvert.DeserializeObject<List<ForthCommingData>>(message);
+                if (entities.Any())
+                {
+                    //await _bulkInsertService.BulkInsertOptionTickersAsync(tickDataList);
+                    await _bulkInsertService.ForthCommingResult_BulkInsertAsync(entities);
+                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                }
 
             });
         }

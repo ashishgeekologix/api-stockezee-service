@@ -60,5 +60,37 @@ DO UPDATE SET
             Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
         }
 
+
+        public async Task ForthCommingResult_BulkInsertAsync(List<ForthCommingData> entities)
+        {
+
+            using var conn = _createConnection();
+            await conn.OpenAsync();
+
+            // Truncate the table before inserting
+            using (var truncateCmd = new NpgsqlCommand("TRUNCATE TABLE forth_comming_result;", conn))
+            {
+                await truncateCmd.ExecuteNonQueryAsync();
+            }
+
+            // Bulk insert using binary importer
+            using (var writer = conn.BeginBinaryImport(@"
+        COPY forth_comming_result (scrip_code, short_name, long_name, meeting_date, url) FROM STDIN (FORMAT BINARY)
+    "))
+            {
+                foreach (var entity in entities)
+                {
+                    await writer.StartRowAsync();
+                    await writer.WriteAsync(entity.scrip_Code ?? "", NpgsqlTypes.NpgsqlDbType.Text);
+                    await writer.WriteAsync(entity.short_name ?? "", NpgsqlTypes.NpgsqlDbType.Text);
+                    await writer.WriteAsync(entity.long_Name ?? "", NpgsqlTypes.NpgsqlDbType.Text);
+                    await writer.WriteAsync(entity.meeting_date ?? "", NpgsqlTypes.NpgsqlDbType.Text);
+                    await writer.WriteAsync(entity.url ?? "", NpgsqlTypes.NpgsqlDbType.Text);
+                }
+                await writer.CompleteAsync();
+            }
+
+            Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
+        }
     }
 }

@@ -77,6 +77,19 @@ builder.Services.AddHostedService<ResourceSubscriberService>();
 
 builder.Services.AddSingleton<PgResourceDbService>();
 
+//builder.Services.AddHttpsRedirection(op =>
+//{
+//    op.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+//    op.HttpsPort = 443;
+//});
+
+//builder.Services.AddHsts(op =>
+//{
+//    op.MaxAge = TimeSpan.FromDays(365);
+//    op.IncludeSubDomains = true;
+//    op.Preload = true;
+
+//});
 
 var app = builder.Build();
 
@@ -84,6 +97,8 @@ var app = builder.Build();
 app.UseResponseCompression();
 
 app.UseHttpsRedirection();
+//app.UseHsts();
+
 
 app.UseRouting();
 app.UseCors("CorsPolicy");

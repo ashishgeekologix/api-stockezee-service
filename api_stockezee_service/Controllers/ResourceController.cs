@@ -21,5 +21,29 @@ namespace api_stockezee_service.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("holidays-list")]
+        public async Task<IActionResult> HolidaysList()
+        {
+            var result = await _pgResource.HolidayList();
+
+            return Ok(result);
+        }
+
+        [HttpGet("fno-lot-size")]
+        public async Task<IActionResult> FnoLotSize()
+        {
+            var result = await _pgResource.FnoLotSize();
+
+            return Ok(result);
+        }
+
+        [HttpGet("forth-comming-result")]
+        public async Task<IActionResult> ForthCommingResult()
+        {
+            var result = await _pgResource.ForthComingResult();
+
+            return Ok(result);
+        }
     }
 }
