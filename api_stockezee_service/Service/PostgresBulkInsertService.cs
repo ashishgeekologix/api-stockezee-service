@@ -229,13 +229,13 @@ DO UPDATE SET
                     cmd.Parameters.AddWithValue("Volume", tick.Volume);
                     cmd.Parameters.AddWithValue("High52", 0);
                     cmd.Parameters.AddWithValue("Low52", 0);
-                    cmd.Parameters.AddWithValue("CreatedAt", DateTime.Now);
-                    cmd.Parameters.AddWithValue("Time", tick.time);
+                    cmd.Parameters.AddWithValue("CreatedAt", tick.Timestamp);
+                    cmd.Parameters.AddWithValue("Time", tick.Timestamp);
                     cmd.Parameters.AddWithValue("Region", GetRegionBySymbol(tick.Symbol));
                     // Calculate MarketStatus based on the condition:
                     // If (created_at + time) >= (current IST - 30 min) AND created_at.Date == current IST.Date, then true, else false.
-                    DateTime createdAt = DateTime.Now; // or use tick.Timestamp if you want to use the data's timestamp
-                    DateTime tickTime = tick.time;
+                    DateTime createdAt = tick.Timestamp; // or use tick.Timestamp if you want to use the data's timestamp
+                    DateTime tickTime = tick.Timestamp;
                     TimeZoneInfo indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
                     DateTime indianNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, indiaTimeZone);
                     DateTime combinedDateTime = new DateTime(

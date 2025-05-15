@@ -4,7 +4,7 @@
     {
         public int OIDayHigh { get; set; }
         public int OI { get; set; }
-        public object LastTradeTime { get; set; }
+        public DateTime LastTradeTime { get; set; }
         public List<object> Offers { get; set; }
         public List<object> Bids { get; set; }
         public double Change { get; set; }
