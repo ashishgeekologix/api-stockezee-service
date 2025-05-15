@@ -224,5 +224,166 @@ ORDER BY
             return resQuote;
 
         }
+
+
+        public async Task<ResultObjectDTO<SecuritiesBanDetailData>> SecuritiesBanList()
+        {
+            ResultObjectDTO<SecuritiesBanDetailData> resQuote = new ResultObjectDTO<SecuritiesBanDetailData>();
+            resQuote.ResultData = new SecuritiesBanDetailData();
+            resQuote.ResultData.date = string.Empty;
+            resQuote.ResultData.securities_ban_result = new List<SecuritiesBanData>();
+            resQuote.ResultData.possible_entrants_result = new List<SecuritiesBanData>();
+            resQuote.ResultData.possible_exits_result = new List<SecuritiesBanData>();
+            resQuote.ResultData.all_list_result = new List<SecuritiesBanData>();
+
+            try
+            {
+
+                var sql = @"
+                    -- Step 1: Create a temporary table and insert the computed data
+
+CREATE TEMP TABLE nse_oi_futures_temp AS
+WITH ordered_dates AS (
+  SELECT DISTINCT created_at
+  FROM nse_ban_list
+  ORDER BY created_at DESC
+  LIMIT 2
+),
+max_dates AS (
+  SELECT 
+    MAX(created_at) AS max_date,
+    MIN(created_at) AS prv_date
+  FROM ordered_dates
+),
+temp_data AS (
+  SELECT *,
+    ROUND((oi_value * 100 / NULLIF(mwpl_value, 0)), 2)::DECIMAL(18,2) AS mwpl_percent,
+    previous_day_in_ban AS curr_previous_day_in_ban
+  FROM nse_ban_list
+  JOIN max_dates ON created_at = max_dates.max_date
+)
+SELECT 
+  nf.symbol_name,
+  t.mwpl_percent AS current_percent,
+  ROUND((nf.oi_value * 100 / NULLIF(nf.mwpl_value, 0)), 2)::DECIMAL(18,2) AS previous_percent,
+  t.limitfornextday,
+  t.created_at AS current_dt,
+  nf.created_at AS previous_dt
+FROM nse_ban_list nf
+JOIN max_dates ON nf.created_at = max_dates.prv_date
+JOIN temp_data t ON t.symbol_name = nf.symbol_name;
+
+-- Step 2: Select max date from temporary context
+SELECT TO_CHAR(MAX(current_dt), 'YYYY-MM-DD') AS max_date_str FROM nse_oi_futures_temp;
+
+-- Step 3: Securities in ban
+SELECT * FROM nse_oi_futures_temp
+WHERE limitfornextday = 'No Fresh Positions'
+ORDER BY current_percent DESC;
+
+-- Step 4: Possible entrants
+SELECT * FROM nse_oi_futures_temp
+WHERE limitfornextday != 'No Fresh Positions'
+  AND current_percent > 80
+ORDER BY current_percent DESC;
+
+-- Step 5: Possible exits
+SELECT * FROM nse_oi_futures_temp
+WHERE limitfornextday = 'No Fresh Positions'
+  AND current_percent < 85
+ORDER BY current_percent DESC;
+
+-- Step 6: All records
+SELECT * FROM nse_oi_futures_temp
+ORDER BY current_percent DESC;
+
+-- Step 7: Drop temp table explicitly (optional, auto-drops at session end)
+DROP TABLE IF EXISTS nse_oi_futures_temp;
+;
+
+                        
+                        ";
+
+
+                using (IDbConnection conn = _createConnection())
+                {
+                    using var data = await conn.QueryMultipleAsync(sql);
+
+                    //var maxDate = await multi.ReadFirstAsync<string>();
+                    //var banList = (await multi.ReadAsync<SecuritiesBanData>()).ToList();
+                    //var entrants = (await multi.ReadAsync<SecuritiesBanData>()).ToList();
+                    //var exits = (await multi.ReadAsync<SecuritiesBanData>()).ToList();
+                    //var all = (await multi.ReadAsync<SecuritiesBanData>()).ToList();
+                    //resQuote.ResultData = await conn.QueryAsync<dynamic>(sql);
+
+
+                    resQuote.ResultData.date = await data.ReadFirstOrDefaultAsync<string>();
+                    resQuote.ResultData.securities_ban_result = await data.ReadAsync<SecuritiesBanData>();
+                    resQuote.ResultData.possible_entrants_result = await data.ReadAsync<SecuritiesBanData>();
+                    resQuote.ResultData.possible_exits_result = await data.ReadAsync<SecuritiesBanData>();
+                    resQuote.ResultData.all_list_result = await data.ReadAsync<SecuritiesBanData>();
+
+
+                }
+                if (resQuote.ResultData is null)
+                {
+                    resQuote.ResultMessage = "Data Not Found.";
+                    resQuote.Result = ResultType.Error;
+                }
+                else
+                {
+                    resQuote.ResultMessage = "Success";
+                    resQuote.Result = ResultType.Success;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resQuote.ResultMessage = ex.Message.ToString();
+                resQuote.Result = ResultType.Error;
+            }
+            return resQuote;
+
+        }
+
+        public async Task<ResultObjectDTO<dynamic>> GlobalMarket()
+        {
+            ResultObjectDTO<dynamic> resQuote = new ResultObjectDTO<dynamic>();
+            try
+            {
+
+                var sql = @"
+                    select
+ symbol_name, open, high, low, close, change, change_percent, last_trade_price, volume, high52, low52, created_at, time, region, market_status From global_eq_stock_data_daily ;
+                        
+                        ";
+
+
+                using (IDbConnection conn = _createConnection())
+                {
+                    resQuote.ResultData = await conn.QueryAsync<dynamic>(sql);
+
+
+
+                }
+                if (resQuote.ResultData is null)
+                {
+                    resQuote.ResultMessage = "Data Not Found.";
+                    resQuote.Result = ResultType.Error;
+                }
+                else
+                {
+                    resQuote.ResultMessage = "Success";
+                    resQuote.Result = ResultType.Success;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resQuote.ResultMessage = ex.Message.ToString();
+                resQuote.Result = ResultType.Error;
+            }
+            return resQuote;
+        }
     }
 }

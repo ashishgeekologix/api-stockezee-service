@@ -165,5 +165,129 @@ DO UPDATE SET
             }
 
         }
+
+        public async Task Global_Eq_Stock_BulkInsertAsync(List<EquityStockData> entities)
+        {
+            try
+            {
+                await using var conn = _createConnection();
+                await conn.OpenAsync();
+
+                await using var batch = new NpgsqlBatch(conn);
+
+
+                foreach (var tick in entities)
+                {
+
+                    var cmd = new NpgsqlBatchCommand(@"
+
+            INSERT INTO public.global_eq_stock_data_daily (
+    symbol_name,
+    open, high, low, close,
+    change, change_percent, last_trade_price,
+    volume, high52, low52, created_at,
+    time, region, market_status
+)
+VALUES (
+    @SymbolName,
+    @Open, @High, @Low, @Close,
+    @Change, @ChangePercent, @LastTradePrice,
+    @Volume, @High52, @Low52, @CreatedAt,
+    @Time, @Region, @MarketStatus
+)
+ON CONFLICT (symbol_name)
+DO UPDATE SET
+    open = EXCLUDED.open,
+    high = EXCLUDED.high,
+    low = EXCLUDED.low,
+    close = EXCLUDED.close,
+    change = EXCLUDED.change,
+    change_percent = EXCLUDED.change_percent,
+    last_trade_price = EXCLUDED.last_trade_price,
+    volume = EXCLUDED.volume,
+    high52 = EXCLUDED.high52,
+    low52 = EXCLUDED.low52,
+    created_at = EXCLUDED.created_at,
+    time = EXCLUDED.time,
+    region = EXCLUDED.region,
+    market_status = EXCLUDED.market_status;
+
+");
+
+                    cmd.Parameters.AddWithValue("SymbolName", tick.Symbol);
+                    cmd.Parameters.AddWithValue("Open", tick.Open);
+                    cmd.Parameters.AddWithValue("High", tick.High);
+                    cmd.Parameters.AddWithValue("Low", tick.Low);
+                    cmd.Parameters.AddWithValue("Close", tick.Close);
+                    cmd.Parameters.AddWithValue("Change", (tick.LastPrice - tick.Close));
+                    // Calculate change percent: if Close is 0, return 0.00, else ((LastPrice - Close) / Close) * 100
+                    decimal changePercent = tick.Close == 0
+                        ? 0.00m
+                        : Math.Round((decimal)((tick.LastPrice - tick.Close) / tick.Close * 100), 2);
+                    cmd.Parameters.AddWithValue("ChangePercent", changePercent);
+                    cmd.Parameters.AddWithValue("LastTradePrice", tick.LastPrice);
+                    cmd.Parameters.AddWithValue("Volume", tick.Volume);
+                    cmd.Parameters.AddWithValue("High52", 0);
+                    cmd.Parameters.AddWithValue("Low52", 0);
+                    cmd.Parameters.AddWithValue("CreatedAt", DateTime.Now);
+                    cmd.Parameters.AddWithValue("Time", tick.time);
+                    cmd.Parameters.AddWithValue("Region", GetRegionBySymbol(tick.Symbol));
+                    // Calculate MarketStatus based on the condition:
+                    // If (created_at + time) >= (current IST - 30 min) AND created_at.Date == current IST.Date, then true, else false.
+                    DateTime createdAt = DateTime.Now; // or use tick.Timestamp if you want to use the data's timestamp
+                    DateTime tickTime = tick.time;
+                    TimeZoneInfo indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                    DateTime indianNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, indiaTimeZone);
+                    DateTime combinedDateTime = new DateTime(
+                        createdAt.Year, createdAt.Month, createdAt.Day,
+                        tickTime.Hour, tickTime.Minute, tickTime.Second, tickTime.Millisecond
+                    );
+
+                    bool marketStatus =
+                        combinedDateTime >= indianNow.AddMinutes(-30) &&
+                        createdAt.Date == indianNow.Date;
+
+                    cmd.Parameters.AddWithValue("MarketStatus", marketStatus);
+
+
+                    batch.BatchCommands.Add(cmd);
+                }
+
+                await batch.ExecuteNonQueryAsync();
+
+                Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        private static string GetRegionBySymbol(string symbol)
+        {
+            if (string.IsNullOrWhiteSpace(symbol))
+                return "Unknown";
+
+            switch (symbol.Trim().ToUpperInvariant())
+            {
+                case "USCOMPOSITE":
+                case "US30":
+                case "US100":
+                case "US500":
+                case "US10YRYIELD":
+                    return "US";
+                case "FRANCE40":
+                case "GERMANY40":
+                case "UK100":
+                    return "Europe";
+                case "SHANGHAICHINA":
+                case "JAPAN225":
+                case "HANGSENG":
+                case "AUS200":
+                    return "Asia";
+                default:
+                    return "Unknown";
+            }
+        }
+
     }
 }

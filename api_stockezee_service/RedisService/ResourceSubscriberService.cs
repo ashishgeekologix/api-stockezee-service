@@ -72,6 +72,19 @@ namespace api_stockezee_service.RedisService
                 }
 
             });
+            await subscriber.SubscribeAsync(RedisChannel.Literal("global_eq_stock_data_daily"), async (channel, message) =>
+            {
+                // Handle received message
+                message = CompressionHelper.DecompressFromBase64(message);
+                var entities = JsonConvert.DeserializeObject<List<EquityStockData>>(message);
+                if (entities.Any())
+                {
+                    await _bulkInsertService.Global_Eq_Stock_BulkInsertAsync(entities);
+                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                }
+
+            });
+
         }
     }
 }

@@ -45,5 +45,19 @@ namespace api_stockezee_service.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("ban-list")]
+        public async Task<IActionResult> BanList()
+        {
+            var result = await _pgResource.SecuritiesBanList();
+            return Ok(result);
+        }
+        [HttpGet("global-market")]
+        public async Task<IActionResult> GlobalMarket()
+        {
+            var result = await _pgResource.GlobalMarket();
+            return Ok(result);
+        }
+
     }
 }
