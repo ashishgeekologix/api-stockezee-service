@@ -1,3 +1,4 @@
+using api_stockezee_service.RedisService;
 using api_stockezee_service.Service;
 using api_stockezee_service.Utility;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -72,7 +73,8 @@ builder.Services.AddSingleton<PostgresBulkInsertService>();
 
 
 // Register our Redis message handler service
-//builder.Services.AddHostedService<ResourceSubscriberService>();
+builder.Services.AddHostedService<ResourceSubscriberService>();
+
 
 builder.Services.AddSingleton<PgResourceDbService>();
 
