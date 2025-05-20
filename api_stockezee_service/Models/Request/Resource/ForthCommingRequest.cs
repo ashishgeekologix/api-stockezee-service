@@ -1,6 +1,6 @@
-﻿namespace api_stockezee_service.Models.Entities.Resource
+﻿namespace api_stockezee_service.Models.Request.Resource
 {
-    public class ForthCommingData
+    public class ForthCommingRequest
     {
         public string scrip_Code { get; set; }
         public string short_name { get; set; }

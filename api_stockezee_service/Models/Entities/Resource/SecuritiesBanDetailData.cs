@@ -13,5 +13,10 @@
         public string symbol_name { get; set; }
         public decimal? current_percent { get; set; }
         public decimal? previous_percent { get; set; }
+        public string limitfornextday { get; set; }
+        public DateTime current_dt { get; set; }
+        public double last_trade_price { get; set; }
+        public double change { get; set; }
+        public double change_percent { get; set; }
     }
 }

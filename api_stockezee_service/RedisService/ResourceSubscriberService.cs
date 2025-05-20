@@ -1,5 +1,6 @@
 ﻿
 using api_stockezee_service.Models.Entities.Resource;
+using api_stockezee_service.Models.Request.Resource;
 using api_stockezee_service.Service;
 using Newtonsoft.Json;
 using Npgsql;
@@ -51,7 +52,7 @@ namespace api_stockezee_service.RedisService
             {
                 // Handle received message
                 message = CompressionHelper.DecompressFromBase64(message);
-                var entities = JsonConvert.DeserializeObject<List<ForthCommingData>>(message);
+                var entities = JsonConvert.DeserializeObject<List<ForthCommingRequest>>(message);
                 if (entities.Any())
                 {
                     await _bulkInsertService.ForthCommingResult_BulkInsertAsync(entities);

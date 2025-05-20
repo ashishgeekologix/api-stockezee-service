@@ -1,4 +1,5 @@
 ﻿using api_stockezee_service.Models.Entities.Resource;
+using api_stockezee_service.Models.Request.Resource;
 using Npgsql;
 
 namespace api_stockezee_service.Service
@@ -70,7 +71,7 @@ DO UPDATE SET
         }
 
 
-        public async Task ForthCommingResult_BulkInsertAsync(List<ForthCommingData> entities)
+        public async Task ForthCommingResult_BulkInsertAsync(List<ForthCommingRequest> entities)
         {
             try
             {
