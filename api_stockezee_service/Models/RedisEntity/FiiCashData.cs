@@ -9,7 +9,7 @@
 
         public decimal buyValue { get; set; }
 
-        public string saleValue { get; set; }
+        public decimal saleValue { get; set; }
 
         public decimal netValue { get; set; }
     }
