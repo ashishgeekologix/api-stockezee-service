@@ -1,5 +1,6 @@
 ﻿
 using api_stockezee_service.Models.Entities.Resource;
+using api_stockezee_service.Models.RedisEntity;
 using api_stockezee_service.Models.Request.Resource;
 using api_stockezee_service.Service;
 using Newtonsoft.Json;
@@ -11,18 +12,15 @@ namespace api_stockezee_service.RedisService
     public class ResourceSubscriberService : BackgroundService
     {
         private readonly IConnectionMultiplexer _redis;
-        //private readonly Func<NpgsqlConnection> _createConnection;
-        private readonly PostgresBulkInsertService _bulkInsertService;
 
-        //private readonly IWebHostEnvironment _env;
-        //private string contentRoot = string.Empty;
+        private readonly PostgresBulkInsertService _bulkInsertService;
 
         public ResourceSubscriberService(
             IConnectionMultiplexer redis,
             Func<NpgsqlConnection> createConnection, PostgresBulkInsertService bulkInsertService)
         {
             _redis = redis;
-            //_createConnection = createConnection;
+
             this._bulkInsertService = bulkInsertService;
 
         }
@@ -81,6 +79,33 @@ namespace api_stockezee_service.RedisService
                 if (entities.Any())
                 {
                     await _bulkInsertService.Global_Eq_Stock_BulkInsertAsync(entities);
+                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                }
+
+            });
+
+
+            await subscriber.SubscribeAsync(RedisChannel.Literal("fii_cash_data"), async (channel, message) =>
+            {
+                // Handle received message
+                message = CompressionHelper.DecompressFromBase64(message);
+                var entities = JsonConvert.DeserializeObject<List<FiiCashData>>(message);
+                if (entities.Any())
+                {
+                    await _bulkInsertService.Fii_Cash_BulkInsertAsync(entities);
+                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                }
+
+            });
+
+            await subscriber.SubscribeAsync(RedisChannel.Literal("participant_wise_oi_data"), async (channel, message) =>
+            {
+                // Handle received message
+                message = CompressionHelper.DecompressFromBase64(message);
+                var entities = JsonConvert.DeserializeObject<List<FaoData>>(message);
+                if (entities.Any())
+                {
+                    await _bulkInsertService.Fao_Data_BulkInsertAsync(entities);
                     Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
                 }
 

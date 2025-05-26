@@ -1,4 +1,4 @@
-﻿namespace api_stockezee_service.Models.Entities.Resource
+﻿namespace api_stockezee_service.Models.RedisEntity
 {
     public class FiiStateData
     {

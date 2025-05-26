@@ -1,4 +1,5 @@
 ﻿using api_stockezee_service.Models.Entities.Resource;
+using api_stockezee_service.Models.RedisEntity;
 using api_stockezee_service.Models.Request.Resource;
 using Npgsql;
 
@@ -290,5 +291,133 @@ DO UPDATE SET
             }
         }
 
+
+        public async Task Fii_Cash_BulkInsertAsync(List<FiiCashData> entities)
+        {
+
+            try
+            {
+                await using var conn = _createConnection();
+                await conn.OpenAsync();
+
+                await using var batch = new NpgsqlBatch(conn);
+
+                foreach (var data in entities)
+                {
+
+                    var cmd = new NpgsqlBatchCommand(@"
+            INSERT INTO fii_cash (category, created_at, buy_value, sell_value, net_value)
+            VALUES (@category, @created_at, @buy_value, @sell_value, @net_value)
+            ON CONFLICT (category, created_at)
+            DO UPDATE SET
+                buy_value = EXCLUDED.buy_value,
+                sell_value = EXCLUDED.sell_value,
+                net_value = EXCLUDED.net_value
+
+
+
+
+    ;");
+
+
+
+                    cmd.Parameters.AddWithValue("category", data.category);
+                    cmd.Parameters.AddWithValue("created_at", DateTime.Parse(data.date));
+                    cmd.Parameters.AddWithValue("buy_value", data.buyValue);
+                    cmd.Parameters.AddWithValue("sell_value", data.sellValue);
+                    cmd.Parameters.AddWithValue("net_value", data.netValue);
+
+                    batch.BatchCommands.Add(cmd);
+                }
+
+                await batch.ExecuteNonQueryAsync();
+
+                Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+        }
+
+        public async Task Fao_Data_BulkInsertAsync(List<FaoData> entities)
+        {
+
+            try
+            {
+                var query = @"
+INSERT INTO fao_data (
+    client_type, future_index_long, future_index_short, future_stock_long, future_stock_short,
+    option_index_call_long, option_index_put_long, option_index_call_short, option_index_put_short,
+    option_stock_call_long, option_stock_put_long, option_stock_call_short, option_stock_put_short,
+    total_long_contracts, total_short_contracts, created_at
+)
+VALUES (
+    @client_type, @future_index_long, @future_index_short, @future_stock_long, @future_stock_short,
+    @option_index_call_long, @option_index_put_long, @option_index_call_short, @option_index_put_short,
+    @option_stock_call_long, @option_stock_put_long, @option_stock_call_short, @option_stock_put_short,
+    @total_long_contracts, @total_short_contracts, @created_at
+)
+ON CONFLICT (client_type, created_at)
+DO UPDATE SET
+    future_index_long = EXCLUDED.future_index_long,
+    future_index_short = EXCLUDED.future_index_short,
+    future_stock_long = EXCLUDED.future_stock_long,
+    future_stock_short = EXCLUDED.future_stock_short,
+    option_index_call_long = EXCLUDED.option_index_call_long,
+    option_index_put_long = EXCLUDED.option_index_put_long,
+    option_index_call_short = EXCLUDED.option_index_call_short,
+    option_index_put_short = EXCLUDED.option_index_put_short,
+    option_stock_call_long = EXCLUDED.option_stock_call_long,
+    option_stock_put_long = EXCLUDED.option_stock_put_long,
+    option_stock_call_short = EXCLUDED.option_stock_call_short,
+    option_stock_put_short = EXCLUDED.option_stock_put_short,
+    total_long_contracts = EXCLUDED.total_long_contracts,
+    total_short_contracts = EXCLUDED.total_short_contracts;
+";
+
+
+                await using var conn = _createConnection();
+                await conn.OpenAsync();
+
+                await using var batch = new NpgsqlBatch(conn);
+
+                foreach (var data in entities)
+                {
+
+                    var cmd = new NpgsqlBatchCommand(query);
+
+
+
+                    cmd.Parameters.AddWithValue("client_type", data.ClientType);
+                    cmd.Parameters.AddWithValue("future_index_long", data.FutureIndexLong);
+                    cmd.Parameters.AddWithValue("future_index_short", data.FutureIndexShort);
+                    cmd.Parameters.AddWithValue("future_stock_long", data.FutureStockLong);
+                    cmd.Parameters.AddWithValue("future_stock_short", data.FutureStockShort);
+                    cmd.Parameters.AddWithValue("option_index_call_long", data.OptionIndexCallLong);
+                    cmd.Parameters.AddWithValue("option_index_put_long", data.OptionIndexPutLong);
+                    cmd.Parameters.AddWithValue("option_index_call_short", data.OptionIndexCallShort);
+                    cmd.Parameters.AddWithValue("option_index_put_short", data.OptionIndexPutShort);
+                    cmd.Parameters.AddWithValue("option_stock_call_long", data.OptionStockCallLong);
+                    cmd.Parameters.AddWithValue("option_stock_put_long", data.OptionStockPutLong);
+                    cmd.Parameters.AddWithValue("option_stock_call_short", data.OptionStockCallShort);
+                    cmd.Parameters.AddWithValue("option_stock_put_short", data.OptionStockPutShort);
+                    cmd.Parameters.AddWithValue("total_long_contracts", data.TotalLongContracts);
+                    cmd.Parameters.AddWithValue("total_short_contracts", data.TotalShortContracts);
+                    cmd.Parameters.AddWithValue("created_at", data.created_at);
+                    batch.BatchCommands.Add(cmd);
+                }
+
+                await batch.ExecuteNonQueryAsync();
+
+                Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+        }
     }
 }
