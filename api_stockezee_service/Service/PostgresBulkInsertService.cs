@@ -324,7 +324,7 @@ DO UPDATE SET
                     cmd.Parameters.AddWithValue("category", data.category);
                     cmd.Parameters.AddWithValue("created_at", DateTime.Parse(data.date));
                     cmd.Parameters.AddWithValue("buy_value", data.buyValue);
-                    cmd.Parameters.AddWithValue("sell_value", data.sellValue);
+                    cmd.Parameters.AddWithValue("sell_value", data.saleValue);
                     cmd.Parameters.AddWithValue("net_value", data.netValue);
 
                     batch.BatchCommands.Add(cmd);
