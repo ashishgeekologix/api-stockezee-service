@@ -90,9 +90,9 @@ namespace api_stockezee_service.Controllers
 
 
         [HttpGet("fii-dii-data")]
-        public async Task<IActionResult> FiiDiiData([Required] string request)
+        public async Task<IActionResult> FiiDiiData([Required] string segment, string participant)
         {
-            var result = await _pgResource.FiiDiiData(request);
+            var result = await _pgResource.FiiDiiData(segment, participant);
             return Ok(result);
         }
 
