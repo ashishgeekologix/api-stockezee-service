@@ -438,5 +438,166 @@ DROP TABLE IF EXISTS nse_oi_futures_temp;";
             }
             return resQuote;
         }
+
+        public async Task<ResultObjectDTO<dynamic>> FiiDiiData(string request)
+        {
+            ResultObjectDTO<dynamic> resQuote = new ResultObjectDTO<dynamic>();
+            try
+            {
+                string sql = string.Empty;
+                if (request.Equals("cashmarket", StringComparison.OrdinalIgnoreCase))
+                {
+                    sql = @"
+                    SELECT 
+                            created_at,
+                            MAX(CASE WHEN category = 'FII/FPI' THEN buy_value END) AS fii_buy_value,
+                            MAX(CASE WHEN category = 'FII/FPI' THEN sell_value END) AS fii_sell_value,
+                            MAX(CASE WHEN category = 'FII/FPI' THEN net_value END) AS fii_net_value,
+                            
+                            MAX(CASE WHEN category = 'DII' THEN buy_value END) AS dii_buy_value,
+                            MAX(CASE WHEN category = 'DII' THEN sell_value END) AS dii_sell_value,
+                            MAX(CASE WHEN category = 'DII' THEN net_value END) AS dii_net_value
+                        
+                        FROM fii_cash
+                        GROUP BY created_at 
+                        ORDER BY created_at DESC  limit 30;;
+                        
+                        ";
+
+                }
+                else if (request.Equals("participant", StringComparison.OrdinalIgnoreCase))
+                {
+                    sql = @"
+                            with cte as (
+                
+                    select  cast(created_at as date) created_at,
+                	-- index future
+                	MAX(CASE WHEN client_type = 'FII' THEN future_index_long END) AS FII_future_index_long,
+                	MAX(CASE WHEN client_type = 'FII' THEN future_index_short END) AS FII_future_index_short,
+                	MAX(CASE WHEN client_type = 'DII' THEN future_index_long END) AS DII_future_index_long,
+                	MAX(CASE WHEN client_type = 'DII' THEN future_index_short END) AS DII_future_index_short,
+                	MAX(CASE WHEN client_type = 'Pro' THEN future_index_long END) AS Pro_future_index_long,
+                	MAX(CASE WHEN client_type = 'Pro' THEN future_index_short END) AS Pro_future_index_short,
+                	MAX(CASE WHEN client_type = 'Client' THEN future_index_long END) AS Client_future_index_long,
+                    MAX(CASE WHEN client_type = 'Client' THEN future_index_short END) AS Client_future_index_short,
+                
+                    --index option
+                	MAX(CASE WHEN client_type = 'FII' THEN option_index_call_long END) AS FII_option_index_call_long,
+                	MAX(CASE WHEN client_type = 'FII' THEN option_index_call_short END) AS FII_option_index_call_short,
+                	MAX(CASE WHEN client_type = 'FII' THEN option_index_put_long END) AS FII_option_index_put_long,
+                	MAX(CASE WHEN client_type = 'FII' THEN option_index_put_short END) AS FII_option_index_put_short,
+                
+                	MAX(CASE WHEN client_type = 'DII' THEN option_index_call_long END) AS DII_option_index_call_long,
+                	MAX(CASE WHEN client_type = 'DII' THEN option_index_call_short END) AS DII_option_index_call_short,
+                	MAX(CASE WHEN client_type = 'DII' THEN option_index_put_long END) AS DII_option_index_put_long,
+                	MAX(CASE WHEN client_type = 'DII' THEN option_index_put_short END) AS DII_option_index_put_short,
+                    
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_index_call_long END) AS Pro_option_index_call_long,
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_index_call_short END) AS Pro_option_index_call_short,
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_index_put_long END) AS Pro_option_index_put_long,
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_index_put_short END) AS Pro_option_index_put_short,
+                
+                	MAX(CASE WHEN client_type = 'Client' THEN option_index_call_long END) AS Client_option_index_call_long,
+                	MAX(CASE WHEN client_type = 'Client' THEN option_index_call_short END) AS Client_option_index_call_short,
+                	MAX(CASE WHEN client_type = 'Client' THEN option_index_put_long END) AS Client_option_index_put_long,
+                	MAX(CASE WHEN client_type = 'Client' THEN option_index_put_short END) AS Client_option_index_put_short,
+                
+                	-- stock future
+                	MAX(CASE WHEN client_type = 'FII' THEN future_stock_long END) AS FII_future_stock_long,
+                	MAX(CASE WHEN client_type = 'FII' THEN future_stock_short END) AS FII_future_stock_short,
+                	MAX(CASE WHEN client_type = 'DII' THEN future_stock_long END) AS DII_future_stock_long,
+                	MAX(CASE WHEN client_type = 'DII' THEN future_stock_short END) AS DII_future_stock_short,
+                	MAX(CASE WHEN client_type = 'Pro' THEN future_stock_long END) AS Pro_future_stock_long,
+                	MAX(CASE WHEN client_type = 'Pro' THEN future_stock_short END) AS Pro_future_stock_short,
+                	MAX(CASE WHEN client_type = 'Client' THEN future_stock_long END) AS Client_future_stock_long,
+                    MAX(CASE WHEN client_type = 'Client' THEN future_stock_short END) AS Client_future_stock_short,
+                
+                	--stock option
+                	MAX(CASE WHEN client_type = 'FII' THEN option_stock_call_long END) AS FII_option_stock_call_long,
+                	MAX(CASE WHEN client_type = 'FII' THEN option_stock_call_short END) AS FII_option_stock_call_short,
+                	MAX(CASE WHEN client_type = 'FII' THEN option_stock_put_long END) AS FII_option_stock_put_long,
+                	MAX(CASE WHEN client_type = 'FII' THEN option_stock_put_short END) AS FII_option_stock_put_short,
+                
+                	MAX(CASE WHEN client_type = 'DII' THEN option_stock_call_long END) AS DII_option_stock_call_long,
+                	MAX(CASE WHEN client_type = 'DII' THEN option_stock_call_short END) AS DII_option_stock_call_short,
+                	MAX(CASE WHEN client_type = 'DII' THEN option_stock_put_long END) AS DII_option_stock_put_long,
+                	MAX(CASE WHEN client_type = 'DII' THEN option_stock_put_short END) AS DII_option_stock_put_short,
+                    
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_stock_call_long END) AS Pro_option_stock_call_long,
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_stock_call_short END) AS Pro_option_stock_call_short,
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_stock_put_long END) AS Pro_option_stock_put_long,
+                	MAX(CASE WHEN client_type = 'Pro' THEN option_stock_put_short END) AS Pro_option_stock_put_short,
+                
+                	MAX(CASE WHEN client_type = 'Client' THEN option_stock_call_long END) AS Client_option_stock_call_long,
+                	MAX(CASE WHEN client_type = 'Client' THEN option_stock_call_short END) AS Client_option_stock_call_short,
+                	MAX(CASE WHEN client_type = 'Client' THEN option_stock_put_long END) AS Client_option_stock_put_long,
+                	MAX(CASE WHEN client_type = 'Client' THEN option_stock_put_short END) AS Client_option_stock_put_short
+                
+                
+                 From fao_data where client_type IN ('FII','DII','Pro','Client') group by cast(created_at as date) order by created_at desc LIMIT 30
+                
+                
+                 )
+                 select *,
+                 (FII_future_index_long-FII_future_index_short) FII_future_index_net, 
+                 (DII_future_index_long-DII_future_index_short) DII_future_index_net,
+                 (Pro_future_index_long-Pro_future_index_short) Pro_future_index_net,
+                 (Client_future_index_long-Client_future_index_short) Client_future_index_net,
+                
+                 (FII_option_index_call_long-FII_option_index_call_short) FII_option_index_call_net,
+                 (FII_option_index_put_long-FII_option_index_put_short) FII_option_index_put_net,
+                 (DII_option_index_call_long-DII_option_index_call_short) DII_option_index_call_net,
+                 (DII_option_index_put_long-DII_option_index_put_short) DII_option_index_put_net,
+                 (Pro_option_index_call_long-Pro_option_index_call_short) Pro_option_index_call_net,
+                 (Pro_option_stock_put_long-Pro_option_stock_put_short) Pro_option_stock_put_net,
+                 (Client_option_index_call_long-Client_option_index_call_short) Client_option_index_call_net,
+                 (Client_option_index_put_long-Client_option_index_put_short) Client_option_index_put_net,
+                
+                
+                 (FII_future_stock_long-FII_future_stock_short) FII_future_stock_net, 
+                 (DII_future_stock_long-DII_future_stock_short) DII_future_stock_net,
+                 (Pro_future_stock_long-Pro_future_stock_short) Pro_future_stock_net,
+                 (Client_future_stock_long-Client_future_stock_short) Client_future_stock_net,
+                
+                
+                 (FII_option_stock_call_long-FII_option_stock_call_short) FII_option_stock_call_net,
+                 (FII_option_stock_put_long-FII_option_stock_put_short) FII_option_stock_put_net,
+                 (DII_option_stock_call_long-DII_option_stock_call_short) DII_option_stock_call_net,
+                 (DII_option_stock_put_long-DII_option_stock_put_short) DII_option_stock_put_net,
+                 (Pro_option_stock_call_long-Pro_option_stock_call_short) Pro_option_stock_call_net,
+                 (Pro_option_stock_put_long-Pro_option_stock_put_short) Pro_option_stock_put_net,
+                 (Client_option_stock_call_long-Client_option_stock_call_short) Client_option_stock_call_net,
+                 (Client_option_stock_put_long-Client_option_stock_put_short) Client_option_stock_put_net
+                
+                 From cte  ;
+                        
+                        ";
+
+                }
+
+                using (IDbConnection conn = _createConnection())
+                {
+                    resQuote.ResultData = await conn.QueryAsync<dynamic>(sql);
+
+                }
+                if (resQuote.ResultData is null)
+                {
+                    resQuote.ResultMessage = "Data Not Found.";
+                    resQuote.Result = ResultType.Error;
+                }
+                else
+                {
+                    resQuote.ResultMessage = "Success";
+                    resQuote.Result = ResultType.Success;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resQuote.ResultMessage = ex.Message.ToString();
+                resQuote.Result = ResultType.Error;
+            }
+            return resQuote;
+        }
     }
 }

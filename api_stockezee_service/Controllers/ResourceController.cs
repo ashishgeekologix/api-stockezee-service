@@ -2,6 +2,7 @@
 using api_stockezee_service.Models.Entities.Resource;
 using api_stockezee_service.Service;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace api_stockezee_service.Controllers
@@ -84,6 +85,14 @@ namespace api_stockezee_service.Controllers
         public async Task<IActionResult> GlobalMarket()
         {
             var result = await _pgResource.GlobalMarket();
+            return Ok(result);
+        }
+
+
+        [HttpGet("fii-dii-data")]
+        public async Task<IActionResult> FiiDiiData([Required] string request)
+        {
+            var result = await _pgResource.FiiDiiData(request);
             return Ok(result);
         }
 
