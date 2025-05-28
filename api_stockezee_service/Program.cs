@@ -31,9 +31,6 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 
-//builder.Services.AddControllers().AddNewtonsoftJson();
-
-
 builder.Services.AddControllers(options =>
 {
     // Add the custom validation filter globally
@@ -78,19 +75,6 @@ builder.Services.AddHostedService<ResourceSubscriberService>();
 
 builder.Services.AddSingleton<PgResourceDbService>();
 
-//builder.Services.AddHttpsRedirection(op =>
-//{
-//    op.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-//    op.HttpsPort = 443;
-//});
-
-//builder.Services.AddHsts(op =>
-//{
-//    op.MaxAge = TimeSpan.FromDays(365);
-//    op.IncludeSubDomains = true;
-//    op.Preload = true;
-
-//});
 
 var app = builder.Build();
 
@@ -115,14 +99,6 @@ app.MapScalarApiReference(op =>
     .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
     op.Theme = ScalarTheme.DeepSpace;
 });
-
-//app.MapScalarApiReference(opt =>
-//{
-//    opt.Title = "Scalar Example";
-//    opt.Theme = ScalarTheme.Mars;
-//    opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.RestSharp);
-//    opt.BaseServerUrl = "https://api.stockezee.com";
-//});
 
 
 app.Run();

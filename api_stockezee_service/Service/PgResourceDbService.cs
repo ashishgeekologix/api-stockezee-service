@@ -547,5 +547,68 @@ from fao_data where client_type=@client_type  order by cast(created_at as date) 
             }
             return resQuote;
         }
+
+        public async Task InsertNseEqStockHistoricalDailyAsync()
+        {
+            var sql = @"
+                INSERT INTO nse_eq_stock_historical_daily
+                SELECT *
+                FROM public.nse_eq_stock_data_daily
+                WHERE created_at = CURRENT_DATE
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM nse_eq_stock_historical_daily
+                    WHERE created_at = CURRENT_DATE
+                    LIMIT 1
+                );
+            ";
+            try
+            {
+                using var conn = _createConnection();
+                await conn.OpenAsync();
+                using var cmd = new NpgsqlCommand(sql, conn);
+                await cmd.ExecuteNonQueryAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error inserting NSE EQ stock historical daily data: {ex.Message}");
+            }
+
+        }
+
+        public async Task<ResultObjectDTO<dynamic>> IndianIndices(string request)
+        {
+            ResultObjectDTO<dynamic> resQuote = new ResultObjectDTO<dynamic>();
+            try
+            {
+
+                var sql = @"
+                        select symbol_name,open,high,low,close,change,change_percent,last_trade_price From nse_eq_stock_data_daily where symbol_name IN ('NIFTY 50','NIFTY BANK','NIFTY FIN SERVICE','NIFTY MIDCAP SELECT (MIDCPNIFTY)','INDIA VIX','NIFTY TOTAL MKT','NIFTY NEXT 50','NIFTY 100','NIFTY MIDCAP 100','NIFTY 500','NIFTY AUTO','NIFTY SMLCAP 100','NIFTY FMCG','NIFTY METAL','NIFTY PHARMA','NIFTY PSU BANK','NIFTY IT','NIFTY SMLCAP 250','NIFTY MIDCAP 150','NIFTY COMMODITIES');
+                        
+                        ";
+                using var conn = _createConnection();
+                await conn.OpenAsync();
+                resQuote.ResultData = await conn.QueryAsync<dynamic>(sql);
+
+                if (resQuote.ResultData is null)
+                {
+                    resQuote.ResultMessage = "Data Not Found.";
+                    resQuote.Result = ResultType.Error;
+                }
+                else
+                {
+                    resQuote.ResultMessage = "Success";
+                    resQuote.Result = ResultType.Success;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resQuote.ResultMessage = ex.Message.ToString();
+                resQuote.Result = ResultType.Error;
+            }
+            return resQuote;
+        }
     }
 }

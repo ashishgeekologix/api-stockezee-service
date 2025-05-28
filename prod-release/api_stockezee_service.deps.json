@@ -9,10 +9,10 @@
       "api_stockezee_service/1.0.0": {
         "dependencies": {
           "Dapper": "2.1.66",
-          "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "9.0.4",
-          "Microsoft.AspNetCore.OpenApi": "9.0.4",
+          "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "9.0.5",
+          "Microsoft.AspNetCore.OpenApi": "9.0.5",
           "Npgsql": "9.0.3",
-          "Scalar.AspNetCore": "2.2.7",
+          "Scalar.AspNetCore": "2.4.3",
           "StackExchange.Redis": "2.8.37"
         },
         "runtime": {
@@ -27,39 +27,39 @@
           }
         }
       },
-      "Microsoft.AspNetCore.JsonPatch/9.0.4": {
+      "Microsoft.AspNetCore.JsonPatch/9.0.5": {
         "dependencies": {
           "Microsoft.CSharp": "4.7.0",
           "Newtonsoft.Json": "13.0.3"
         },
         "runtime": {
           "lib/net9.0/Microsoft.AspNetCore.JsonPatch.dll": {
-            "assemblyVersion": "9.0.4.0",
-            "fileVersion": "9.0.425.16403"
+            "assemblyVersion": "9.0.5.0",
+            "fileVersion": "9.0.525.22904"
           }
         }
       },
-      "Microsoft.AspNetCore.Mvc.NewtonsoftJson/9.0.4": {
+      "Microsoft.AspNetCore.Mvc.NewtonsoftJson/9.0.5": {
         "dependencies": {
-          "Microsoft.AspNetCore.JsonPatch": "9.0.4",
+          "Microsoft.AspNetCore.JsonPatch": "9.0.5",
           "Newtonsoft.Json": "13.0.3",
           "Newtonsoft.Json.Bson": "1.0.2"
         },
         "runtime": {
           "lib/net9.0/Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll": {
-            "assemblyVersion": "9.0.4.0",
-            "fileVersion": "9.0.425.16403"
+            "assemblyVersion": "9.0.5.0",
+            "fileVersion": "9.0.525.22904"
           }
         }
       },
-      "Microsoft.AspNetCore.OpenApi/9.0.4": {
+      "Microsoft.AspNetCore.OpenApi/9.0.5": {
         "dependencies": {
           "Microsoft.OpenApi": "1.6.17"
         },
         "runtime": {
           "lib/net9.0/Microsoft.AspNetCore.OpenApi.dll": {
-            "assemblyVersion": "9.0.4.0",
-            "fileVersion": "9.0.425.16403"
+            "assemblyVersion": "9.0.5.0",
+            "fileVersion": "9.0.525.22904"
           }
         }
       },
@@ -119,11 +119,11 @@
           }
         }
       },
-      "Scalar.AspNetCore/2.2.7": {
+      "Scalar.AspNetCore/2.4.3": {
         "runtime": {
           "lib/net9.0/Scalar.AspNetCore.dll": {
-            "assemblyVersion": "2.2.7.0",
-            "fileVersion": "2.2.7.0"
+            "assemblyVersion": "2.4.3.0",
+            "fileVersion": "2.4.3.0"
           }
         }
       },
@@ -155,26 +155,26 @@
       "path": "dapper/2.1.66",
       "hashPath": "dapper.2.1.66.nupkg.sha512"
     },
-    "Microsoft.AspNetCore.JsonPatch/9.0.4": {
+    "Microsoft.AspNetCore.JsonPatch/9.0.5": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-UwO32yEyDv3a5FOs6BHOpymKMm6eFi6endbwsL+6RubtMhj6ohfszImuYE15Veg9oyx0LbZ5cdzTrxSIWC7kug==",
-      "path": "microsoft.aspnetcore.jsonpatch/9.0.4",
-      "hashPath": "microsoft.aspnetcore.jsonpatch.9.0.4.nupkg.sha512"
+      "sha512": "sha512-crPPD4YCnv4YFoHN7zXdwkvegn5VH3MILfTfXCZKAM8TF5c9J1hMLV5fEahH2fW1FVxvU6YjH0poQqKvff3ZUw==",
+      "path": "microsoft.aspnetcore.jsonpatch/9.0.5",
+      "hashPath": "microsoft.aspnetcore.jsonpatch.9.0.5.nupkg.sha512"
     },
-    "Microsoft.AspNetCore.Mvc.NewtonsoftJson/9.0.4": {
+    "Microsoft.AspNetCore.Mvc.NewtonsoftJson/9.0.5": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-6yo3NnRagiOHuGu+Pd0W0fVd0ZX08DV4ciu5048Hog4rtfVNnCgezp65q9Gm9ZFmaVQpkP4+YWPtN9SELh186A==",
-      "path": "microsoft.aspnetcore.mvc.newtonsoftjson/9.0.4",
-      "hashPath": "microsoft.aspnetcore.mvc.newtonsoftjson.9.0.4.nupkg.sha512"
+      "sha512": "sha512-7NkMM4CaHhmOg3GgXgbVB9CU8PiJvvgW3ykr3yXnt/NlePP9P7QuP365FPv/4LupoQEbDyPVbME3I+zrH02uRg==",
+      "path": "microsoft.aspnetcore.mvc.newtonsoftjson/9.0.5",
+      "hashPath": "microsoft.aspnetcore.mvc.newtonsoftjson.9.0.5.nupkg.sha512"
     },
-    "Microsoft.AspNetCore.OpenApi/9.0.4": {
+    "Microsoft.AspNetCore.OpenApi/9.0.5": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-GfZWPbZz1aAtEO3wGCkpeyRc0gzr/+VRHnUgY/YjqVPDlHbeKWCXw3IxKarQdo9myC2O1QBf652Mo50QqbXYRg==",
-      "path": "microsoft.aspnetcore.openapi/9.0.4",
-      "hashPath": "microsoft.aspnetcore.openapi.9.0.4.nupkg.sha512"
+      "sha512": "sha512-yZLOciYlpaOO/mHPOpgeSZTv8Lc7fOOVX40eWJJoGs/S9Ny9CymDuKKQofGE9stXGGM9EEnnuPeq0fhR8kdFfg==",
+      "path": "microsoft.aspnetcore.openapi/9.0.5",
+      "hashPath": "microsoft.aspnetcore.openapi.9.0.5.nupkg.sha512"
     },
     "Microsoft.CSharp/4.7.0": {
       "type": "package",
@@ -232,12 +232,12 @@
       "path": "pipelines.sockets.unofficial/2.2.8",
       "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
     },
-    "Scalar.AspNetCore/2.2.7": {
+    "Scalar.AspNetCore/2.4.3": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-28RhQGPl842ynbFYtpA68HcyhZMxbDBpu7fr2tRjol1jysA8quOh3NTpB+MVtquqbPeDHXxgV9CqCHjpnYXWng==",
-      "path": "scalar.aspnetcore/2.2.7",
-      "hashPath": "scalar.aspnetcore.2.2.7.nupkg.sha512"
+      "sha512": "sha512-aeJet4TGbrNjmEl4le92nfo3PAMFMiZBPizKSD2zwClR8nOSxHGhf5AToVU7adoMgRcPppAEt9bJQpTdNRMhbA==",
+      "path": "scalar.aspnetcore/2.4.3",
+      "hashPath": "scalar.aspnetcore.2.4.3.nupkg.sha512"
     },
     "StackExchange.Redis/2.8.37": {
       "type": "package",
