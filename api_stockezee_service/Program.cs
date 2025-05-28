@@ -8,7 +8,7 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//// Add services to the container.
+// Add services to the container.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
@@ -16,11 +16,21 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod()
         .AllowAnyHeader());
 });
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("CorsPolicy",
+//         builder =>
+//         {
+//             builder
+//             .SetIsOriginAllowedToAllowWildcardSubdomains()
+//             .WithOrigins("http://stockezee.in", "https://stockezee.com", "http://*.stockezee.com", "https://*.stockezee.com", "http://localhost:3005") // Allow specific origins and subdomains
+//             .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+//         });
+//});
 
 
 // Add services to the container.
 
-//builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddControllers(options =>
 {
     // Add the custom validation filter globally
@@ -62,6 +72,7 @@ builder.Services.AddSingleton<PostgresBulkInsertService>();
 // Register our Redis message handler service
 builder.Services.AddHostedService<ResourceSubscriberService>();
 
+
 builder.Services.AddSingleton<PgResourceDbService>();
 
 
@@ -71,6 +82,8 @@ var app = builder.Build();
 app.UseResponseCompression();
 
 app.UseHttpsRedirection();
+//app.UseHsts();
+
 
 app.UseRouting();
 app.UseCors("CorsPolicy");
@@ -80,18 +93,11 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapOpenApi();
-//app.MapScalarApiReference(op =>
-//{
-//    op
-//    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
-//});
-
-app.MapScalarApiReference(opt =>
+app.MapScalarApiReference(op =>
 {
-    opt.Title = "Scalar Example";
-    opt.Theme = ScalarTheme.Mars;
-    opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.RestSharp);
-    opt.BaseServerUrl = "https://api.stockezee.com";
+    op
+    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
+    op.Theme = ScalarTheme.DeepSpace;
 });
 
 
