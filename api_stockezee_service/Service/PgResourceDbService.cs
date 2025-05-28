@@ -407,8 +407,39 @@ DROP TABLE IF EXISTS nse_oi_futures_temp;";
             {
 
                 var sql = @"
-                    select
- symbol_name, open, high, low, close, change, change_percent, last_trade_price, volume, high52, low52, created_at, time, region, market_status From global_eq_stock_data_daily ;
+                    SELECT
+  CASE UPPER(symbol_name)
+    WHEN 'US500' THEN 'S&P 500 FUTURES'
+    WHEN 'US30' THEN 'DOW JONES'
+    WHEN 'US100' THEN 'NASDAQ FUTURES'
+    WHEN 'FRANCE40' THEN 'CAC 40'
+    WHEN 'UK100' THEN 'FTSE 100'
+    WHEN 'GERMANY40' THEN 'DAX'
+    WHEN 'JAPAN225' THEN 'NIKKEI 225'
+    WHEN 'HANGSENG' THEN 'HANG SENG'
+    WHEN 'SHANGHAICHINA' THEN 'SHANGHAI'
+    ELSE symbol_name
+  END AS symbol_name,
+  open,
+  high,
+  low,
+  close,
+  change,
+  change_percent,
+  last_trade_price,
+  volume,
+  high52,
+  low52,
+  created_at,
+  time,
+  region,
+  CASE
+    WHEN created_at::date = CURRENT_DATE
+         AND (created_at + time) >= (CURRENT_TIMESTAMP - INTERVAL '30 minutes')
+    THEN 1
+    ELSE 0
+  END AS market_status
+FROM global_eq_stock_data_daily;
                         
                         ";
 
