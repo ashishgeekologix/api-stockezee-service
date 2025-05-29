@@ -324,7 +324,19 @@ DO UPDATE SET
 
 
                     cmd.Parameters.AddWithValue("category", data.category);
-                    cmd.Parameters.AddWithValue("created_at", DateTime.Parse(data.date));
+
+                    //// Replace this line:
+                    //cmd.Parameters.AddWithValue("created_at", DateTime.Parse(data.date));
+
+                    // With this safer parsing logic:
+                    if (!DateTime.TryParseExact(data.date, new[] { "dd/MM/yyyy", "yyyy-MM-dd", "MM/dd/yyyy" },
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out var parsedDate))
+                    {
+                        // Handle parse failure, e.g. log or throw
+                        throw new FormatException($"Invalid date format: {data.date}");
+                    }
+                    cmd.Parameters.AddWithValue("created_at", parsedDate);
                     cmd.Parameters.AddWithValue("buy_value", data.buyValue);
                     cmd.Parameters.AddWithValue("sell_value", data.saleValue);
                     cmd.Parameters.AddWithValue("net_value", data.netValue);
