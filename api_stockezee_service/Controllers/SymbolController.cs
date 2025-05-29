@@ -19,6 +19,7 @@ namespace api_stockezee_service.Controllers
         {
             var result = await _pgResource.IndianIndices(request);
 
+
             return Ok(result);
         }
     }

@@ -494,7 +494,7 @@ FROM global_eq_stock_data_daily;
                         
                         FROM fii_cash
                         GROUP BY created_at 
-                        ORDER BY created_at DESC  limit 30;;
+                        ORDER BY created_at DESC  limit 30;
                         
                         ";
 

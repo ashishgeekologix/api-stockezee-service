@@ -7,10 +7,12 @@ namespace api_stockezee_service.Service
 {
     public class PostgresBulkInsertService
     {
+        private readonly LogDbService _log;
         private readonly Func<NpgsqlConnection> _createConnection;
 
-        public PostgresBulkInsertService(Func<NpgsqlConnection> createConnection)
+        public PostgresBulkInsertService(LogDbService log, Func<NpgsqlConnection> createConnection)
         {
+            this._log = log;
             _createConnection = createConnection;
         }
 
@@ -336,7 +338,7 @@ DO UPDATE SET
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
 
         }

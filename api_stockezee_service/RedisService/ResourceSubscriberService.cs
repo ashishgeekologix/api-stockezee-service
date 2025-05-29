@@ -11,14 +11,16 @@ namespace api_stockezee_service.RedisService
 {
     public class ResourceSubscriberService : BackgroundService
     {
+        private readonly LogDbService _log;
         private readonly IConnectionMultiplexer _redis;
 
         private readonly PostgresBulkInsertService _bulkInsertService;
 
-        public ResourceSubscriberService(
+        public ResourceSubscriberService(LogDbService log,
             IConnectionMultiplexer redis,
             Func<NpgsqlConnection> createConnection, PostgresBulkInsertService bulkInsertService)
         {
+            this._log = log;
             _redis = redis;
 
             this._bulkInsertService = bulkInsertService;
@@ -88,13 +90,21 @@ namespace api_stockezee_service.RedisService
             await subscriber.SubscribeAsync(RedisChannel.Literal("fii_cash_data"), async (channel, message) =>
             {
                 // Handle received message
-                message = CompressionHelper.DecompressFromBase64(message);
-                var entities = JsonConvert.DeserializeObject<List<FiiCashData>>(message);
-                if (entities.Any())
+                try
                 {
-                    await _bulkInsertService.Fii_Cash_BulkInsertAsync(entities);
-                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                    message = CompressionHelper.DecompressFromBase64(message);
+                    var entities = JsonConvert.DeserializeObject<List<FiiCashData>>(message);
+                    if (entities.Any())
+                    {
+                        await _bulkInsertService.Fii_Cash_BulkInsertAsync(entities);
+                        Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                    }
                 }
+                catch (Exception ex)
+                {
+                    await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
+                }
+
 
             });
 
