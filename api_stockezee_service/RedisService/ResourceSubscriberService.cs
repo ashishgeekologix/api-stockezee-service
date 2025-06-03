@@ -1,5 +1,4 @@
-﻿
-using api_stockezee_service.Models.Entities.Resource;
+﻿using api_stockezee_service.Models.Entities.Resource;
 using api_stockezee_service.Models.RedisEntity;
 using api_stockezee_service.Models.Request.Resource;
 using api_stockezee_service.Service;
@@ -121,6 +120,19 @@ namespace api_stockezee_service.RedisService
 
             });
 
+
+            //await subscriber.SubscribeAsync(RedisChannel.Literal("nse_eq_stock_data_daily"), async (channel, message) =>
+            //{
+            //    // Handle received message
+            //    //message = CompressionHelper.DecompressFromBase64(message);
+            //    var entities = JsonConvert.DeserializeObject<List<RangeBreakoutCurrent>>(message);
+            //    if (entities.Any())
+            //    {
+            //        await _bulkInsertService.Nse_Eq_Stock_Orb_InsertAsync(entities);
+            //        Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+            //    }
+
+            //});
         }
     }
 }

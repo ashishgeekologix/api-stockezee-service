@@ -1,5 +1,7 @@
 ﻿using api_stockezee_service.Models;
 using api_stockezee_service.Models.Entities.Resource;
+using api_stockezee_service.Models.RedisEntity;
+using api_stockezee_service.Utility;
 using Dapper;
 using Npgsql;
 using System.Data;
@@ -482,30 +484,37 @@ FROM global_eq_stock_data_daily;
                 if (segment.Equals("cash_market", StringComparison.OrdinalIgnoreCase))
                 {
                     sql = @"
-                    SELECT 
-                            created_at,
+                    ;with cte_nifty as (
+		        select created_at as prev_date,change_percent From nse_eq_stock_historical_daily where symbol_name='NIFTY 50' order by created_at limit 30
+                            )
+                        SELECT 
+                            fii.created_at,
                             MAX(CASE WHEN category = 'FII/FPI' THEN buy_value END) AS fii_buy_value,
                             MAX(CASE WHEN category = 'FII/FPI' THEN sell_value END) AS fii_sell_value,
                             MAX(CASE WHEN category = 'FII/FPI' THEN net_value END) AS fii_net_value,
                             
                             MAX(CASE WHEN category = 'DII' THEN buy_value END) AS dii_buy_value,
                             MAX(CASE WHEN category = 'DII' THEN sell_value END) AS dii_sell_value,
-                            MAX(CASE WHEN category = 'DII' THEN net_value END) AS dii_net_value
-                        
-                        FROM fii_cash
-                        GROUP BY created_at 
-                        ORDER BY created_at DESC  limit 30;
+                            MAX(CASE WHEN category = 'DII' THEN net_value END) AS dii_net_value,
+                           		eqh.change_percent nifty_change_percent  
+                        FROM fii_cash as fii LEFT join cte_nifty as eqh on fii.created_at=eqh.prev_date 
+                        GROUP BY fii.created_at ,change_percent
+                        ORDER BY fii.created_at DESC  limit 30;
                         
                         ";
 
                 }
                 else if (segment.Equals("index_future", StringComparison.OrdinalIgnoreCase))
                 {
-                    sql = @"select  CAST(created_at as date) created_at,future_index_long,future_index_short,(future_index_long-future_index_short) future_index_net,
-	(future_index_long-LAG(future_index_long) OVER (ORDER BY CAST(created_at as date) desc)) AS future_index_long_change,  
-	(future_index_short-LAG(future_index_short) OVER (ORDER BY CAST(created_at as date) desc)) AS future_index_short_change,	
-	((future_index_long-future_index_short)-LAG((future_index_long-future_index_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS future_index_net_change
-from fao_data  where client_type=@client_type  order by cast(created_at as date) desc limit  20;";
+                    sql = @";with cte_nifty as (
+                    select created_at as prev_date,change_percent From nse_eq_stock_historical_daily where symbol_name='NIFTY 50' order by created_at limit 30
+                        )
+                select  CAST(created_at as date) created_at,future_index_long,future_index_short,(future_index_long-future_index_short) future_index_net,
+                	(future_index_long-LAG(future_index_long) OVER (ORDER BY CAST(created_at as date) desc)) AS future_index_long_change,  
+                	(future_index_short-LAG(future_index_short) OVER (ORDER BY CAST(created_at as date) desc)) AS future_index_short_change,	
+                	((future_index_long-future_index_short)-LAG((future_index_long-future_index_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS future_index_net_change,
+                	eqh.change_percent nifty_change_percent
+                from fao_data f left join cte_nifty as eqh on f.created_at=eqh.prev_date  where client_type=@client_type  order by cast(created_at as date) desc limit  20;";
 
 
 
@@ -514,32 +523,43 @@ from fao_data  where client_type=@client_type  order by cast(created_at as date)
 
                 else if (segment.Equals("index_option", StringComparison.OrdinalIgnoreCase))
                 {
-                    sql = @"select CAST(created_at as date) created_at,
-	            option_index_call_long,option_index_call_short,(option_index_call_long - option_index_call_short) option_index_call_net,
-	option_index_put_long,option_index_put_short,(option_index_put_long - option_index_put_short) option_index_put_net,
+                    sql = @";with cte_nifty as (
+            select created_at as prev_date,change_percent From nse_eq_stock_historical_daily where symbol_name='NIFTY 50' order by created_at limit 30
+                )
 
-	(option_index_call_long - LAG(option_index_call_long) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_call_long_change,
-	(option_index_call_short - LAG(option_index_call_short) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_call_short_change,
-	(option_index_put_long - LAG(option_index_put_long) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_put_long_change,
-	(option_index_put_short - LAG(option_index_put_short) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_put_short_change,
-	((option_index_call_long - option_index_call_short) - LAG((option_index_call_long - option_index_call_short)) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_call_net_change,
-	((option_index_put_long - option_index_put_short) - LAG((option_index_put_long - option_index_put_short)) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_put_net_change
-
-from fao_data  where client_type = @client_type  order by cast(created_at as date) desc limit 20 ;";
+            select CAST(created_at as date) created_at,
+            	            option_index_call_long,option_index_call_short,(option_index_call_long - option_index_call_short) option_index_call_net,
+            	option_index_put_long,option_index_put_short,(option_index_put_long - option_index_put_short) option_index_put_net,
+            
+            	(option_index_call_long - LAG(option_index_call_long) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_call_long_change,
+            	(option_index_call_short - LAG(option_index_call_short) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_call_short_change,
+            	(option_index_put_long - LAG(option_index_put_long) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_put_long_change,
+            	(option_index_put_short - LAG(option_index_put_short) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_put_short_change,
+            	((option_index_call_long - option_index_call_short) - LAG((option_index_call_long - option_index_call_short)) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_call_net_change,
+            	((option_index_put_long - option_index_put_short) - LAG((option_index_put_long - option_index_put_short)) OVER(ORDER BY CAST(created_at as date) desc)) AS option_index_put_net_change,
+            eq.change_percent nifty_change_percent
+            from fao_data f left join cte_nifty as eq on f.created_at=eq.prev_date  where client_type = @client_type  order by cast(created_at as date) desc limit 20 ;";
                 }
 
                 else if (segment.Equals("stock_future", StringComparison.OrdinalIgnoreCase))
                 {
-                    sql = @"select CAST(created_at as date) created_at,future_stock_long,future_stock_short,(future_stock_long-future_stock_short) future_stock_net,
+                    sql = @";with cte_nifty as (
+select created_at as prev_date,change_percent From nse_eq_stock_historical_daily where symbol_name='NIFTY 50' order by created_at limit 30
+)
+select CAST(created_at as date) created_at,future_stock_long,future_stock_short,(future_stock_long-future_stock_short) future_stock_net,
 	(future_stock_long-LAG(future_stock_long) OVER (ORDER BY CAST(created_at as date) desc)) AS future_stock_long_change,  
 	(future_stock_short-LAG(future_stock_short) OVER (ORDER BY CAST(created_at as date) desc)) AS future_stock_short_change,	
-	((future_stock_long-future_stock_short)-LAG((future_stock_long-future_stock_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS future_stock_net_change
-from fao_data where client_type=@client_type  order by cast(created_at as date) desc limit 20;";
+	((future_stock_long-future_stock_short)-LAG((future_stock_long-future_stock_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS future_stock_net_change,
+	eq.change_percent nifty_change_percent
+from fao_data f left join cte_nifty as eq on f.created_at=eq.prev_date where client_type=@client_type  order by cast(created_at as date) desc limit 20;";
                 }
 
                 else if (segment.Equals("stock_option", StringComparison.OrdinalIgnoreCase))
                 {
-                    sql = @"select  CAST(created_at as date) created_at,
+                    sql = @";with cte_nifty as (
+select created_at as prev_date,change_percent From nse_eq_stock_historical_daily where symbol_name='NIFTY 50' order by created_at limit 30
+)
+select  CAST(created_at as date) created_at,
 	option_stock_call_long,option_stock_call_short,(option_stock_call_long-option_stock_call_short) option_stock_call_net,
 	option_stock_put_long,option_stock_put_short,(option_stock_put_long-option_stock_put_short) option_stock_put_net,
 
@@ -548,9 +568,9 @@ from fao_data where client_type=@client_type  order by cast(created_at as date) 
 	(option_stock_put_long-LAG(option_stock_put_long) OVER (ORDER BY CAST(created_at as date) desc)) AS option_stock_put_long_change,
 	(option_stock_put_short-LAG(option_stock_put_short) OVER (ORDER BY CAST(created_at as date) desc)) AS option_stock_put_short_change,
 	((option_stock_call_long-option_stock_call_short)-LAG((option_stock_call_long-option_stock_call_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS option_stock_call_net_change,
-	((option_stock_put_long-option_stock_put_short)-LAG((option_stock_put_long-option_stock_put_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS option_stock_put_net_change
-
-from fao_data where client_type=@client_type  order by cast(created_at as date) desc  limit 20;";
+	((option_stock_put_long-option_stock_put_short)-LAG((option_stock_put_long-option_stock_put_short)) OVER (ORDER BY CAST(created_at as date) desc)) AS option_stock_put_net_change,
+eq.change_percent nifty_change_percent
+from fao_data f left join cte_nifty as eq on f.created_at=eq.prev_date where client_type=@client_type  order by cast(created_at as date) desc  limit 20;";
                 }
 
 
@@ -640,6 +660,183 @@ from fao_data where client_type=@client_type  order by cast(created_at as date) 
                 resQuote.Result = ResultType.Error;
             }
             return resQuote;
+        }
+
+
+        public async Task<ResultObjectDTO<dynamic>> OrbRangeBreakout()
+        {
+            ResultObjectDTO<dynamic> resQuote = new ResultObjectDTO<dynamic>();
+            try
+            {
+
+                var sql = @"
+                        select * From public.range_breakout   order by symbol_name;
+                        
+                        ";
+                using var conn = _createConnection();
+                await conn.OpenAsync();
+                resQuote.ResultData = await conn.QueryAsync<dynamic>(sql);
+
+                if (resQuote.ResultData is null)
+                {
+                    resQuote.ResultMessage = "Data Not Found.";
+                    resQuote.Result = ResultType.Error;
+                }
+                else
+                {
+                    resQuote.ResultMessage = "Success";
+                    resQuote.Result = ResultType.Success;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                resQuote.ResultMessage = ex.Message.ToString();
+                resQuote.Result = ResultType.Error;
+            }
+            return resQuote;
+        }
+
+
+        public async Task OrbUpdate()
+        {
+            try
+            {
+                var result = new List<DateTime>();
+                var today = DateTime.Today;
+                var start = today.AddHours(9).AddMinutes(31);
+                var now = DateTime.Now;
+
+                using var conn = _createConnection();
+                await conn.OpenAsync();
+
+                for (var dt = start; dt <= now; dt = dt.AddMinutes(1))
+                {
+                    var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
+                    var param = new { time = new TimeSpan(dt.Hour, dt.Minute, 0) }; // or pass as string "09:31:00"
+                    var current_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Range_Current, param);
+
+                    foreach (var orb in orb_data)
+                    {
+
+                        var item = current_data.Where(_ => _.symbol_name == orb.symbol_name).FirstOrDefault();
+                        // Calculate breakout direction
+                        if (item.close > orb.high && item.high > orb.high)
+                        {
+                            item.breakout_direction = "High";
+
+                        }
+                        else if (item.close < orb.low && item.low < orb.low)
+                        {
+                            item.breakout_direction = "Low";
+
+                        }
+                        else
+                        {
+                            item.breakout_direction = "None";
+                        }
+
+                        // Calculate breakout point as per formula
+                        double breakoutPoint = 0.0;
+                        if (item.breakout_direction == "High")
+                        {
+                            if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "High")
+                            {
+                                orb.current_score = 0;
+                                breakoutPoint = 1.0;
+                                orb.last_direction = item.breakout_direction;
+                            }
+
+                            else
+                            {
+                                breakoutPoint = 0.2;
+                                orb.last_direction = item.breakout_direction;
+
+                            }
+
+                        }
+                        else if (item.breakout_direction == "Low")
+                        {
+                            if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "Low")
+                            {
+                                orb.current_score = 0;
+                                breakoutPoint = -1.0;
+                                orb.last_direction = item.breakout_direction;
+                            }
+
+                            else
+                            {
+                                breakoutPoint = -0.2;
+                                orb.last_direction = item.breakout_direction;
+                            }
+
+                        }
+                        else
+                        {
+                            breakoutPoint = 0.0;
+                        }
+
+                        // Add breakout point to item (dynamic, so use reflection or ExpandoObject)
+                        item.break_point = breakoutPoint;
+
+                        // Update credit score
+                        orb.current_score += breakoutPoint;
+                        item.last_direction = orb.last_direction;
+                        // Add credit score to item
+
+                        item.current_score = Math.Round(orb.current_score, 2);
+
+                    }
+
+
+
+                    await using var batch = new NpgsqlBatch(conn);
+                    await using var batchIntraday = new NpgsqlBatch(conn);
+                    foreach (var data in current_data)
+                    {
+
+                        var cmd = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Current);
+
+                        cmd.Parameters.AddWithValue("@SymbolName", data.symbol_name);
+                        // Fix: Use dt.TimeOfDay instead of TimeSpan.Parse(dt.ToShortTimeString())
+                        cmd.Parameters.AddWithValue("@Time", dt.TimeOfDay);
+                        //cmd.Parameters.AddWithValue("@Time", TimeSpan.Parse(dt.ToShortTimeString()));
+                        cmd.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
+                        cmd.Parameters.AddWithValue("@BreakPoint", data.break_point);
+                        cmd.Parameters.AddWithValue("@CurrentScore", data.current_score);
+                        //// Replace this line:
+                        //cmd.Parameters.AddWithValue("@LastDirection", data.last_direction);
+
+                        // With this:
+                        cmd.Parameters.AddWithValue("@LastDirection", data.last_direction ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+
+                        batch.BatchCommands.Add(cmd);
+
+
+                        var cmdIntraday = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Intraday);
+                        cmdIntraday.Parameters.AddWithValue("@SymbolName", data.symbol_name);
+                        cmdIntraday.Parameters.AddWithValue("@Time", dt.TimeOfDay);
+                        cmdIntraday.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
+                        cmdIntraday.Parameters.AddWithValue("@BreakPoint", data.break_point);
+                        cmdIntraday.Parameters.AddWithValue("@CurrentScore", data.current_score);
+                        cmdIntraday.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+                        batchIntraday.BatchCommands.Add(cmdIntraday);
+                    }
+
+                    await batch.ExecuteNonQueryAsync();
+
+                    await batchIntraday.ExecuteNonQueryAsync();
+
+                    Console.WriteLine($"Inserted {orb_data.Count()} ticks at {DateTime.Now}");
+
+                    result.Add(dt);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

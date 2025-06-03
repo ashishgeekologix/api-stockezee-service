@@ -1,6 +1,8 @@
 ﻿using api_stockezee_service.Models.Entities.Resource;
 using api_stockezee_service.Models.RedisEntity;
 using api_stockezee_service.Models.Request.Resource;
+using api_stockezee_service.Utility;
+using Dapper;
 using Npgsql;
 
 namespace api_stockezee_service.Service
@@ -68,7 +70,7 @@ DO UPDATE SET
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
 
         }
@@ -108,7 +110,7 @@ DO UPDATE SET
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
 
 
@@ -165,7 +167,7 @@ DO UPDATE SET
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
 
         }
@@ -263,7 +265,7 @@ DO UPDATE SET
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
         }
         private static string GetRegionBySymbol(string symbol)
@@ -329,9 +331,7 @@ DO UPDATE SET
                     //cmd.Parameters.AddWithValue("created_at", DateTime.Parse(data.date));
 
                     // With this safer parsing logic:
-                    if (!DateTime.TryParseExact(data.date, new[] { "dd/MM/yyyy", "yyyy-MM-dd", "MM/dd/yyyy" },
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        System.Globalization.DateTimeStyles.None, out var parsedDate))
+                    if (!DateTimeHelper.TryParseFlexibleDate(data.date, out var parsedDate))
                     {
                         // Handle parse failure, e.g. log or throw
                         throw new FormatException($"Invalid date format: {data.date}");
@@ -429,9 +429,136 @@ DO UPDATE SET
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
 
         }
+
+        public async Task Nse_Eq_Stock_Orb_InsertAsync(List<RangeBreakoutCurrent> current_data)
+        {
+            try
+            {
+                using var conn = _createConnection();
+                await conn.OpenAsync();
+                var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
+
+                foreach (var orb in orb_data)
+                {
+
+                    var item = current_data.Where(_ => _.symbol_name == orb.symbol_name).FirstOrDefault();
+                    // Calculate breakout direction
+                    if (item.close > orb.high && item.high > orb.high)
+                    {
+                        item.breakout_direction = "High";
+
+                    }
+                    else if (item.close < orb.low && item.low < orb.low)
+                    {
+                        item.breakout_direction = "Low";
+
+                    }
+                    else
+                    {
+                        item.breakout_direction = "None";
+                    }
+
+                    // Calculate breakout point as per formula
+                    double breakoutPoint = 0.0;
+                    if (item.breakout_direction == "High")
+                    {
+                        if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "High")
+                        {
+                            orb.current_score = 0;
+                            breakoutPoint = 1.0;
+                            orb.last_direction = item.breakout_direction;
+                        }
+
+                        else
+                        {
+                            breakoutPoint = 0.2;
+                            orb.last_direction = item.breakout_direction;
+
+                        }
+
+                    }
+                    else if (item.breakout_direction == "Low")
+                    {
+                        if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "Low")
+                        {
+                            orb.current_score = 0;
+                            breakoutPoint = -1.0;
+                            orb.last_direction = item.breakout_direction;
+                        }
+
+                        else
+                        {
+                            breakoutPoint = -0.2;
+                            orb.last_direction = item.breakout_direction;
+                        }
+
+                    }
+                    else
+                    {
+                        breakoutPoint = 0.0;
+                    }
+
+                    // Add breakout point to item (dynamic, so use reflection or ExpandoObject)
+                    item.break_point = breakoutPoint;
+
+                    // Update credit score
+                    orb.current_score += breakoutPoint;
+                    item.last_direction = orb.last_direction;
+                    // Add credit score to item
+
+                    item.current_score = Math.Round(orb.current_score, 2);
+
+                }
+
+
+
+                await using var batch = new NpgsqlBatch(conn);
+                await using var batchIntraday = new NpgsqlBatch(conn);
+                foreach (var data in current_data)
+                {
+
+                    var cmd = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Current);
+
+                    cmd.Parameters.AddWithValue("@SymbolName", data.symbol_name);
+                    // Fix: Use dt.TimeOfDay instead of TimeSpan.Parse(dt.ToShortTimeString())
+                    cmd.Parameters.AddWithValue("@Time", data.time.TimeOfDay);
+                    //cmd.Parameters.AddWithValue("@Time", TimeSpan.Parse(dt.ToShortTimeString()));
+                    cmd.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
+                    cmd.Parameters.AddWithValue("@BreakPoint", data.break_point);
+                    cmd.Parameters.AddWithValue("@CurrentScore", data.current_score);
+                    // With this:
+                    cmd.Parameters.AddWithValue("@LastDirection", data.last_direction ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+
+                    batch.BatchCommands.Add(cmd);
+
+
+                    var cmdIntraday = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Intraday);
+                    cmdIntraday.Parameters.AddWithValue("@SymbolName", data.symbol_name);
+                    cmdIntraday.Parameters.AddWithValue("@Time", data.time.TimeOfDay);
+                    cmdIntraday.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
+                    cmdIntraday.Parameters.AddWithValue("@BreakPoint", data.break_point);
+                    cmdIntraday.Parameters.AddWithValue("@CurrentScore", data.current_score);
+                    cmdIntraday.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+                    batchIntraday.BatchCommands.Add(cmdIntraday);
+                }
+
+                await batch.ExecuteNonQueryAsync();
+
+                await batchIntraday.ExecuteNonQueryAsync();
+
+                Console.WriteLine($"Inserted {orb_data.Count()} ticks at {DateTime.Now}");
+
+            }
+            catch (Exception ex)
+            {
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
+            }
+        }
+
     }
 }
