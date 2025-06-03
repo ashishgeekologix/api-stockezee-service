@@ -441,6 +441,11 @@ DO UPDATE SET
                 using var conn = _createConnection();
                 await conn.OpenAsync();
                 var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
+                // Step 1: Get all symbol_name values from current_data
+                var currentSymbols = orb_data.Select(x => x.symbol_name).ToHashSet();
+
+                // Step 2: Filter orb_data to only those with symbol_name in currentSymbols
+                current_data = current_data.Where(orb => currentSymbols.Contains(orb.symbol_name)).ToList();
 
                 foreach (var orb in orb_data)
                 {
