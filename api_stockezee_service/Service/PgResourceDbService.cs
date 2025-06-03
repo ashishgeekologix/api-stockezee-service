@@ -670,7 +670,25 @@ from fao_data f left join cte_nifty as eq on f.created_at=eq.prev_date where cli
             {
 
                 var sql = @"
-                        select * From public.range_breakout   order by symbol_name;
+                                    SELECT *
+            FROM (
+                SELECT *, 'Bullish' AS trend
+                FROM public.range_breakout
+                WHERE current_score > 0
+                ORDER BY current_score DESC
+                LIMIT 10
+            ) AS bullish
+            
+            UNION ALL
+            
+            SELECT *
+            FROM (
+                SELECT *, 'Bearish' AS trend
+                FROM public.range_breakout
+                WHERE current_score < 0
+                ORDER BY current_score ASC
+                LIMIT 10
+            ) AS bearish;
                         
                         ";
                 using var conn = _createConnection();
