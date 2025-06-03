@@ -438,125 +438,146 @@ DO UPDATE SET
         {
             try
             {
-                using var conn = _createConnection();
-                await conn.OpenAsync();
-                var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
-                // Step 1: Get all symbol_name values from current_data
-                var currentSymbols = orb_data.Select(x => x.symbol_name).ToHashSet();
-
-                // Step 2: Filter orb_data to only those with symbol_name in currentSymbols
-                current_data = current_data.Where(orb => currentSymbols.Contains(orb.symbol_name)).ToList();
-
-                foreach (var orb in orb_data)
+                var today = DateTime.Today;
+                var start = today.AddHours(9).AddMinutes(31);
+                if (current_data.FirstOrDefault().time.TimeOfDay >= start.TimeOfDay) // Set the time to 9:31 AM for all records
                 {
 
-                    var item = current_data.Where(_ => _.symbol_name == orb.symbol_name).FirstOrDefault();
-                    // Calculate breakout direction
-                    if (item.close > orb.high && item.high > orb.high)
-                    {
-                        item.breakout_direction = "High";
+                    using var conn = _createConnection();
+                    await conn.OpenAsync();
+                    // Check range_breakout
+                    bool hasOldBreakoutData = await conn.ExecuteScalarAsync<bool>(
+                        "SELECT EXISTS (SELECT 1 FROM range_breakout WHERE created_at < CURRENT_DATE)"
+                    );
 
-                    }
-                    else if (item.close < orb.low && item.low < orb.low)
+                    if (hasOldBreakoutData)
                     {
-                        item.breakout_direction = "Low";
+                        var sql = @"
+                        TRUNCATE TABLE range_breakout;
+                        TRUNCATE TABLE range_breakout_intraday;
+                                    ";
+                        await conn.ExecuteAsync(sql);
+                        Console.WriteLine("Truncated range_breakout.");
+                    }
 
-                    }
-                    else
-                    {
-                        item.breakout_direction = "None";
-                    }
+                    var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
+                    // Step 1: Get all symbol_name values from current_data
+                    var currentSymbols = orb_data.Select(x => x.symbol_name).ToHashSet();
+                    // Step 2: Filter orb_data to only those with symbol_name in currentSymbols
+                    current_data = current_data.Where(orb => currentSymbols.Contains(orb.symbol_name)).ToList();
 
-                    // Calculate breakout point as per formula
-                    double breakoutPoint = 0.0;
-                    if (item.breakout_direction == "High")
+                    foreach (var orb in orb_data)
                     {
-                        if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "High")
+
+                        var item = current_data.Where(_ => _.symbol_name == orb.symbol_name).FirstOrDefault();
+                        // Calculate breakout direction
+                        if (item.close > orb.high && item.high > orb.high)
                         {
-                            orb.current_score = 0;
-                            breakoutPoint = 1.0;
-                            orb.last_direction = item.breakout_direction;
-                        }
+                            item.breakout_direction = "High";
 
+                        }
+                        else if (item.close < orb.low && item.low < orb.low)
+                        {
+                            item.breakout_direction = "Low";
+
+                        }
                         else
                         {
-                            breakoutPoint = 0.2;
-                            orb.last_direction = item.breakout_direction;
-
+                            item.breakout_direction = "None";
                         }
 
-                    }
-                    else if (item.breakout_direction == "Low")
-                    {
-                        if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "Low")
+                        // Calculate breakout point as per formula
+                        double breakoutPoint = 0.0;
+                        if (item.breakout_direction == "High")
                         {
-                            orb.current_score = 0;
-                            breakoutPoint = -1.0;
-                            orb.last_direction = item.breakout_direction;
-                        }
+                            if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "High")
+                            {
+                                orb.current_score = 0;
+                                breakoutPoint = 100.0;
+                                orb.last_direction = item.breakout_direction;
+                            }
 
+                            else
+                            {
+                                breakoutPoint = 2.0;
+                                orb.last_direction = item.breakout_direction;
+
+                            }
+
+                        }
+                        else if (item.breakout_direction == "Low")
+                        {
+                            if (string.IsNullOrEmpty(orb.last_direction) || orb.last_direction != "Low")
+                            {
+                                orb.current_score = 0;
+                                breakoutPoint = -100.0;
+                                orb.last_direction = item.breakout_direction;
+                            }
+
+                            else
+                            {
+                                breakoutPoint = -2.0;
+                                orb.last_direction = item.breakout_direction;
+                            }
+
+                        }
                         else
                         {
-                            breakoutPoint = -0.2;
-                            orb.last_direction = item.breakout_direction;
+                            breakoutPoint = 0.0;
                         }
 
+                        // Add breakout point to item (dynamic, so use reflection or ExpandoObject)
+                        item.break_point = breakoutPoint;
+
+                        // Update credit score
+                        orb.current_score += breakoutPoint;
+                        item.last_direction = orb.last_direction;
+                        // Add credit score to item
+
+                        item.current_score = Math.Round(orb.current_score, 2);
+
                     }
-                    else
+
+
+
+                    await using var batch = new NpgsqlBatch(conn);
+                    await using var batchIntraday = new NpgsqlBatch(conn);
+                    foreach (var data in current_data)
                     {
-                        breakoutPoint = 0.0;
+
+                        var cmd = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Current);
+
+                        cmd.Parameters.AddWithValue("@SymbolName", data.symbol_name);
+                        cmd.Parameters.AddWithValue("@Time", data.time.TimeOfDay);
+                        cmd.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
+                        cmd.Parameters.AddWithValue("@BreakPoint", data.break_point);
+                        cmd.Parameters.AddWithValue("@CurrentScore", data.current_score);
+                        cmd.Parameters.AddWithValue("@LastDirection", data.last_direction ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+                        batch.BatchCommands.Add(cmd);
+
+
+                        var cmdIntraday = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Intraday);
+                        cmdIntraday.Parameters.AddWithValue("@SymbolName", data.symbol_name);
+                        cmdIntraday.Parameters.AddWithValue("@Time", data.time.TimeOfDay);
+                        cmdIntraday.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
+                        cmdIntraday.Parameters.AddWithValue("@BreakPoint", data.break_point);
+                        cmdIntraday.Parameters.AddWithValue("@CurrentScore", data.current_score);
+                        cmdIntraday.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+                        batchIntraday.BatchCommands.Add(cmdIntraday);
                     }
 
-                    // Add breakout point to item (dynamic, so use reflection or ExpandoObject)
-                    item.break_point = breakoutPoint;
+                    await batch.ExecuteNonQueryAsync();
 
-                    // Update credit score
-                    orb.current_score += breakoutPoint;
-                    item.last_direction = orb.last_direction;
-                    // Add credit score to item
+                    await batchIntraday.ExecuteNonQueryAsync();
 
-                    item.current_score = Math.Round(orb.current_score, 2);
+                    Console.WriteLine($"Inserted {orb_data.Count()} ticks at {DateTime.Now}");
+
 
                 }
 
 
 
-                await using var batch = new NpgsqlBatch(conn);
-                await using var batchIntraday = new NpgsqlBatch(conn);
-                foreach (var data in current_data)
-                {
-
-                    var cmd = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Current);
-
-                    cmd.Parameters.AddWithValue("@SymbolName", data.symbol_name);
-                    // Fix: Use dt.TimeOfDay instead of TimeSpan.Parse(dt.ToShortTimeString())
-                    cmd.Parameters.AddWithValue("@Time", data.time.TimeOfDay);
-                    //cmd.Parameters.AddWithValue("@Time", TimeSpan.Parse(dt.ToShortTimeString()));
-                    cmd.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
-                    cmd.Parameters.AddWithValue("@BreakPoint", data.break_point);
-                    cmd.Parameters.AddWithValue("@CurrentScore", data.current_score);
-                    // With this:
-                    cmd.Parameters.AddWithValue("@LastDirection", data.last_direction ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
-
-                    batch.BatchCommands.Add(cmd);
-
-
-                    var cmdIntraday = new NpgsqlBatchCommand(PgSqlQueries.Update_Breakout_Intraday);
-                    cmdIntraday.Parameters.AddWithValue("@SymbolName", data.symbol_name);
-                    cmdIntraday.Parameters.AddWithValue("@Time", data.time.TimeOfDay);
-                    cmdIntraday.Parameters.AddWithValue("@BreakDirection", data.breakout_direction);
-                    cmdIntraday.Parameters.AddWithValue("@BreakPoint", data.break_point);
-                    cmdIntraday.Parameters.AddWithValue("@CurrentScore", data.current_score);
-                    cmdIntraday.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
-                    batchIntraday.BatchCommands.Add(cmdIntraday);
-                }
-
-                await batch.ExecuteNonQueryAsync();
-
-                await batchIntraday.ExecuteNonQueryAsync();
-
-                Console.WriteLine($"Inserted {orb_data.Count()} ticks at {DateTime.Now}");
 
             }
             catch (Exception ex)
