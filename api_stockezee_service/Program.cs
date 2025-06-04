@@ -96,7 +96,7 @@ app.MapScalarApiReference(op =>
 {
     op
     .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
-    op.Theme = ScalarTheme.DeepSpace;
+    op.Theme = ScalarTheme.Solarized;
 });
 
 app.Run();

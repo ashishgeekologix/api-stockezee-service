@@ -440,7 +440,10 @@ DO UPDATE SET
             {
                 var today = DateTime.Today;
                 var start = today.AddHours(9).AddMinutes(31);
-                if (current_data.FirstOrDefault().time.TimeOfDay >= start.TimeOfDay) // Set the time to 9:31 AM for all records
+                var end = today.AddHours(15).AddMinutes(32);
+                // Only proceed if the first data point's time is within the start and end time window
+                var firstTime = current_data.FirstOrDefault()?.time.TimeOfDay;
+                if (firstTime >= start.TimeOfDay && firstTime <= end.TimeOfDay)
                 {
 
                     using var conn = _createConnection();
