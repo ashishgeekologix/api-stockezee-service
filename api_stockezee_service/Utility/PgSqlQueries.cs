@@ -52,11 +52,11 @@ WHERE eq.time = (
         public const string Update_Breakout_Current = @"
         INSERT INTO range_breakout (
             symbol_name, time, break_direction, break_point,
-            current_score, last_direction, created_at
+            current_score, last_direction, created_at,high,low,close
         )
         VALUES (
             @SymbolName, @Time, @BreakDirection, @BreakPoint,
-            @CurrentScore, @LastDirection, @CreatedAt
+            @CurrentScore, @LastDirection, @CreatedAt,@High,@Low,@Close
         )
         ON CONFLICT (symbol_name)
         DO UPDATE SET
@@ -65,24 +65,31 @@ WHERE eq.time = (
             break_point = EXCLUDED.break_point,
             current_score = EXCLUDED.current_score,
             last_direction = EXCLUDED.last_direction,
-            created_at = EXCLUDED.created_at;
+            created_at = EXCLUDED.created_at,
+            high = EXCLUDED.high,
+            low = EXCLUDED.low,
+            close = EXCLUDED.close
+            ;
     ";
 
         public const string Update_Breakout_Intraday = @"
         INSERT INTO range_breakout_intraday (
             symbol_name, time, break_direction, break_point,
-            current_score, created_at
+            current_score, created_at,high,low,close
         )
         VALUES (
             @SymbolName, @Time, @BreakDirection, @BreakPoint,
-            @CurrentScore, @CreatedAt
+            @CurrentScore, @CreatedAt, @High,@Low,@Close
         )
         ON CONFLICT (symbol_name, time)
         DO UPDATE SET
             break_direction = EXCLUDED.break_direction,
             break_point = EXCLUDED.break_point,
             current_score = EXCLUDED.current_score,
-            created_at = EXCLUDED.created_at;
+            created_at = EXCLUDED.created_at,
+            high = EXCLUDED.high,
+            low = EXCLUDED.low,
+            close = EXCLUDED.close;
     ";
 
     }

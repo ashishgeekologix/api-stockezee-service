@@ -560,6 +560,9 @@ DO UPDATE SET
                         cmd.Parameters.AddWithValue("@CurrentScore", data.current_score);
                         cmd.Parameters.AddWithValue("@LastDirection", data.last_direction ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+                        cmd.Parameters.AddWithValue("@High", data.high);
+                        cmd.Parameters.AddWithValue("@Low", data.low);
+                        cmd.Parameters.AddWithValue("@Close", data.close);
                         batch.BatchCommands.Add(cmd);
 
 
@@ -570,6 +573,9 @@ DO UPDATE SET
                         cmdIntraday.Parameters.AddWithValue("@BreakPoint", data.break_point);
                         cmdIntraday.Parameters.AddWithValue("@CurrentScore", data.current_score);
                         cmdIntraday.Parameters.AddWithValue("@CreatedAt", DateTime.Today);
+                        cmdIntraday.Parameters.AddWithValue("@High", data.high);
+                        cmdIntraday.Parameters.AddWithValue("@Low", data.low);
+                        cmdIntraday.Parameters.AddWithValue("@Close", data.close);
                         batchIntraday.BatchCommands.Add(cmdIntraday);
                     }
 
