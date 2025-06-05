@@ -2,24 +2,46 @@
 {
     public static class PgSqlQueries
     {
+        //        public const string Select_Orb_Range = @"
+        //            SELECT 
+        //    eq.symbol_name,
+        //    TIME '09:30:00' AS time,
+        //    MAX(eq.high) AS high,
+        //    MAX(eq.low) AS low,
+        //    0 AS close,
+        //	br.current_score,
+        //	br.last_direction
+        //FROM 
+        //    public.nse_eq_stock_data_intraday_daily eq
+        //JOIN 
+        //    nse_fno_lot_size fn ON eq.symbol_name = fn.symbol
+        //LEFT JOIN 	public.range_breakout br on eq.symbol_name=br.symbol_name
+        //WHERE 
+        //    eq.time BETWEEN TIME '09:15:00' AND TIME '09:30:00'
+        //GROUP BY 
+        //    eq.symbol_name,br.current_score,br.last_direction;
+        //        ";
+
+
         public const string Select_Orb_Range = @"
-            SELECT 
-    eq.symbol_name,
-    TIME '09:30:00' AS time,
-    MAX(eq.high) AS high,
-    MAX(eq.low) AS low,
+            SELECT eq.symbol_name,
+    eq.time,
+    eq.high AS high,
+    eq.low AS low,
     0 AS close,
 	br.current_score,
-	br.last_direction
-FROM 
-    public.nse_eq_stock_data_intraday_daily eq
-JOIN 
-    nse_fno_lot_size fn ON eq.symbol_name = fn.symbol
-LEFT JOIN 	public.range_breakout br on eq.symbol_name=br.symbol_name
-WHERE 
-    eq.time BETWEEN TIME '09:15:00' AND TIME '09:30:00'
-GROUP BY 
-    eq.symbol_name,br.current_score,br.last_direction;
+	br.last_direction  
+FROM public.nse_eq_stock_data_intraday_daily eq
+JOIN nse_fno_lot_size fn 
+    ON eq.symbol_name = fn.symbol
+LEFT JOIN public.range_breakout br 
+	ON eq.symbol_name=br.symbol_name
+WHERE eq.time = (
+    SELECT MAX(time)
+    FROM nse_eq_stock_data_intraday_daily 
+    WHERE time < @time
+    LIMIT 1
+);
         ";
 
 

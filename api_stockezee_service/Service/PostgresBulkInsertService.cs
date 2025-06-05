@@ -452,7 +452,6 @@ DO UPDATE SET
                     bool hasOldBreakoutData = await conn.ExecuteScalarAsync<bool>(
                         "SELECT EXISTS (SELECT 1 FROM range_breakout WHERE created_at < CURRENT_DATE)"
                     );
-
                     if (hasOldBreakoutData)
                     {
                         var sql = @"
@@ -463,7 +462,9 @@ DO UPDATE SET
                         Console.WriteLine("Truncated range_breakout.");
                     }
 
-                    var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
+
+                    var param = new { time = firstTime }; // or pass as string "09:31:00"
+                    var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range, param);
                     // Step 1: Get all symbol_name values from current_data
                     var currentSymbols = orb_data.Select(x => x.symbol_name).ToHashSet();
                     // Step 2: Filter orb_data to only those with symbol_name in currentSymbols
@@ -474,12 +475,14 @@ DO UPDATE SET
 
                         var item = current_data.Where(_ => _.symbol_name == orb.symbol_name).FirstOrDefault();
                         // Calculate breakout direction
-                        if (item.close > orb.high && item.high > orb.high)
+                        //if (item.close > orb.high && item.high > orb.high)
+                        if (item.close > orb.high)
                         {
                             item.breakout_direction = "High";
 
                         }
-                        else if (item.close < orb.low && item.low < orb.low)
+                        //else if (item.close < orb.low && item.low < orb.low)
+                        else if (item.close < orb.low)
                         {
                             item.breakout_direction = "Low";
 

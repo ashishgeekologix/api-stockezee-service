@@ -743,8 +743,9 @@ SELECT * FROM bearish;
 
                 for (var dt = start; dt <= now; dt = dt.AddMinutes(1))
                 {
-                    var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range);
-                    var param = new { time = new TimeSpan(dt.Hour, dt.Minute, 0) }; // or pass as string "09:31:00"
+                    var param = new { time = new TimeSpan(dt.Hour, dt.Minute, 0) };
+                    var orb_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Orb_Range, param);
+                    // or pass as string "09:31:00"
                     var current_data = await conn.QueryAsync<RangeBreakout>(PgSqlQueries.Select_Range_Current, param);
                     if (current_data is not null)
                     {
@@ -753,12 +754,14 @@ SELECT * FROM bearish;
 
                             var item = current_data.Where(_ => _.symbol_name == orb.symbol_name).FirstOrDefault();
                             // Calculate breakout direction
-                            if (item.close > orb.high && item.high > orb.high)
+                            //if (item.close > orb.high && item.high > orb.high)
+                            if (item.close > orb.high)
                             {
                                 item.breakout_direction = "High";
 
                             }
-                            else if (item.close < orb.low && item.low < orb.low)
+                            //else if (item.close < orb.low && item.low < orb.low)
+                            else if (item.close < orb.low)
                             {
                                 item.breakout_direction = "Low";
 
