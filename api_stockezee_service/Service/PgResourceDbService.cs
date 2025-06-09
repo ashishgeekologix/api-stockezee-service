@@ -669,11 +669,11 @@ from fao_data f left join cte_nifty as eq on f.created_at=eq.prev_date where cli
             try
             {
 
-                var sql = @"                                    WITH bullish AS (
+                var sql = @" WITH bullish AS (
     SELECT 
         rb.symbol_name,
-		rb.time,
-		rb.current_score,
+        rb.time,
+        rb.current_score,
         'Bullish' AS trend,
         eq.last_trade_price,
         eq.change,
@@ -682,14 +682,14 @@ from fao_data f left join cte_nifty as eq on f.created_at=eq.prev_date where cli
     INNER JOIN nse_eq_stock_data_daily eq 
         ON eq.symbol_name = rb.symbol_name
     WHERE rb.current_score > 0
-    ORDER BY rb.current_score DESC
+    ORDER BY rb.current_score DESC,eq.change_percent DESC
     LIMIT 10
 ),
 bearish AS (
     SELECT 
         rb.symbol_name,
-		rb.time,
-		rb.current_score, 
+        rb.time,
+        rb.current_score, 
         'Bearish' AS trend,
         eq.last_trade_price,
         eq.change,
@@ -698,12 +698,15 @@ bearish AS (
     INNER JOIN nse_eq_stock_data_daily eq 
         ON eq.symbol_name = rb.symbol_name
     WHERE rb.current_score < 0
-    ORDER BY rb.current_score ASC
+    ORDER BY rb.current_score ASC, eq.change_percent ASC
     LIMIT 10
 )
-SELECT * FROM bullish 
-UNION ALL
-SELECT * FROM bearish  order by trend desc,current_score DESC,change_percent desc;
+SELECT * FROM (
+    SELECT * FROM bullish 
+    UNION ALL
+    SELECT * FROM bearish 
+) t;
+
 
                         
                         ";
