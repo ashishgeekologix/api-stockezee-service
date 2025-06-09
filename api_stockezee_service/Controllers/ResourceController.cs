@@ -72,8 +72,8 @@ namespace api_stockezee_service.Controllers
                 {
                     date = res.ResultData.Max(_ => _.current_dt).ToString("yyyy-MM-dd"),
                     securities_ban_result = res.ResultData.Where(_ => _.limitfornextday == "No Fresh Positions").ToList(),
-                    possible_entrants_result = res.ResultData.Where(_ => _.limitfornextday == "No Fresh Positions" && _.change_percent > 80).ToList(),
-                    possible_exits_result = res.ResultData.Where(_ => _.limitfornextday == "No Fresh Positions" && _.change_percent < 85).ToList(),
+                    possible_entrants_result = res.ResultData.Where(_ => _.limitfornextday != "No Fresh Positions" && _.current_percent > 80).ToList(),
+                    possible_exits_result = res.ResultData.Where(_ => _.limitfornextday == "No Fresh Positions" && _.current_percent < 85).ToList(),
                     all_list_result = res.ResultData
                 }
             };
@@ -94,6 +94,14 @@ namespace api_stockezee_service.Controllers
         {
             var result = await _pgResource.FiiDiiData(segment, participant);
             return Ok(result);
+        }
+
+        [HttpGet("orb-update")]
+        public async Task<IActionResult> OrbRangeBreakout()
+        {
+            await _pgResource.OrbUpdate();
+            return Ok();
+
         }
 
     }

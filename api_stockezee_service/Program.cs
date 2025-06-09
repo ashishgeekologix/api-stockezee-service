@@ -67,23 +67,22 @@ builder.Services.AddSingleton<Func<NpgsqlConnection>>(sp =>
 });
 
 builder.Services.AddSingleton<PostgresBulkInsertService>();
-
+builder.Services.AddSingleton<LogDbService>();
 
 // Register our Redis message handler service
 builder.Services.AddHostedService<ResourceSubscriberService>();
 
-
 builder.Services.AddSingleton<PgResourceDbService>();
-
 
 var app = builder.Build();
 
+// Add global exception logging middleware
+app.UseExceptionLogging();
 
 app.UseResponseCompression();
 
 app.UseHttpsRedirection();
 //app.UseHsts();
-
 
 app.UseRouting();
 app.UseCors("CorsPolicy");
@@ -97,9 +96,8 @@ app.MapScalarApiReference(op =>
 {
     op
     .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.RestSharp);
-    op.Theme = ScalarTheme.DeepSpace;
+    op.Theme = ScalarTheme.Solarized;
 });
-
 
 app.Run();
 

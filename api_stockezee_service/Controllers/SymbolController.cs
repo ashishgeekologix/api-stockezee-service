@@ -19,6 +19,14 @@ namespace api_stockezee_service.Controllers
         {
             var result = await _pgResource.IndianIndices(request);
 
+
+            return Ok(result);
+        }
+
+        [HttpGet("orb-range")]
+        public async Task<IActionResult> OrbRange()
+        {
+            var result = await _pgResource.OrbRangeBreakout();
             return Ok(result);
         }
     }
