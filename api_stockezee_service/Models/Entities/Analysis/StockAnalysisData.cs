@@ -1,0 +1,21 @@
+﻿namespace api_stockezee_service.Models.Entities.Analysis
+{
+    public class StockAnalysisData
+    {
+        public dynamic spot_price { get; set; }
+
+        public dynamic intraday_chart { get; set; }
+        public dynamic company_details { get; set; }
+        public dynamic company_peers { get; set; }
+        public dynamic company_financials { get; set; }
+
+        public StockAnalysisData()
+        {
+            spot_price = null;
+            intraday_chart = null;
+            company_details = null;
+            company_peers = null;
+            company_financials = null;
+        }
+    }
+}

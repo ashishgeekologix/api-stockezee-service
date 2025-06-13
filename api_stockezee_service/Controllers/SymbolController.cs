@@ -8,10 +8,12 @@ namespace api_stockezee_service.Controllers
     public class SymbolController : ControllerBase
     {
         private readonly PgResourceDbService _pgResource;
+        private readonly PgAnalysisService _pgAnalysis;
 
-        public SymbolController(PgResourceDbService pgResource)
+        public SymbolController(PgResourceDbService pgResource, PgAnalysisService pgAnalysis)
         {
             this._pgResource = pgResource;
+            this._pgAnalysis = pgAnalysis;
         }
 
         [HttpGet("eq-stock")]
@@ -27,6 +29,15 @@ namespace api_stockezee_service.Controllers
         public async Task<IActionResult> OrbRange()
         {
             var result = await _pgResource.OrbRangeBreakout();
+            return Ok(result);
+        }
+
+
+        [HttpGet("stock-analysis")]
+        public async Task<IActionResult> StockAnalysis(string symbol)
+        {
+            var result = await _pgAnalysis.StockAnalysis(symbol);
+
             return Ok(result);
         }
     }

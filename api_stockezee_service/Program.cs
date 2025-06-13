@@ -73,6 +73,7 @@ builder.Services.AddSingleton<LogDbService>();
 builder.Services.AddHostedService<ResourceSubscriberService>();
 
 builder.Services.AddSingleton<PgResourceDbService>();
+builder.Services.AddSingleton<PgAnalysisService>();
 
 var app = builder.Build();
 
