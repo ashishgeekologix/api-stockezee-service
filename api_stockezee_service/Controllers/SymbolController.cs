@@ -33,12 +33,6 @@ namespace api_stockezee_service.Controllers
         }
 
 
-        [HttpGet("stock-analysis")]
-        public async Task<IActionResult> StockAnalysis(string symbol)
-        {
-            var result = await _pgAnalysis.StockAnalysis(symbol);
 
-            return Ok(result);
-        }
     }
 }

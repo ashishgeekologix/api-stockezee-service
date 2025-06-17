@@ -32,17 +32,20 @@ namespace api_stockezee_service.Service
         WHERE symbol_name = @symbol;
         
         select * From public.nse_company_details where symbol_name=@symbol;
-        select * From public.nse_company_peers where symbol_name=@symbol;
+        select * From public.nse_company_peers where parent_symbol_name=@symbol;
         select * From public.nse_company_financials where symbol_name=@symbol order by period asc;
+        select * From public.nse_company_shareholding where symbol_name=@symbol order by period asc;
     
 ";
                 using var conn = _createConnection();
                 using var multi = await conn.QueryMultipleAsync(sql, new { symbol });
                 resQuote.ResultData.spot_price = await multi.ReadFirstOrDefaultAsync<dynamic>();
                 resQuote.ResultData.intraday_chart = await multi.ReadFirstOrDefaultAsync<dynamic>();
+
                 resQuote.ResultData.company_details = await multi.ReadFirstOrDefaultAsync<dynamic>();
                 resQuote.ResultData.company_peers = await multi.ReadAsync<dynamic>();
                 resQuote.ResultData.company_financials = await multi.ReadAsync<dynamic>();
+                resQuote.ResultData.company_shareholding = await multi.ReadAsync<dynamic>();
 
 
                 if (resQuote.ResultData is null)
