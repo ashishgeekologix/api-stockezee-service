@@ -133,6 +133,19 @@ namespace api_stockezee_service.RedisService
                 }
 
             });
+
+            await subscriber.SubscribeAsync(RedisChannel.Literal("nse_bhav_copy_eod"), async (channel, message) =>
+            {
+                // Handle received message
+                message = CompressionHelper.DecompressFromBase64(message);
+                var entities = JsonConvert.DeserializeObject<List<BhavCopyData>>(message);
+                if (entities.Any())
+                {
+                    await _bulkInsertService.Bhav_Copy_BulkInsertAsync(entities);
+                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                }
+
+            });
         }
     }
 }

@@ -434,6 +434,79 @@ DO UPDATE SET
 
         }
 
+
+        public async Task Bhav_Copy_BulkInsertAsync(List<BhavCopyData> entities)
+        {
+
+            try
+            {
+                var query = @"
+INSERT INTO nse_bhav_copy (
+    symbol, series, previous_close, open, high, low, last, close,
+    average_price, volume, turn_over_lacs, no_of_trades,
+    delivery_quantity, delivery_percentage, created_at
+)
+VALUES (
+    @symbol, @series, @previous_close, @open, @high, @low, @last, @close,
+    @average_price, @volume, @turn_over_lacs, @no_of_trades,
+    @delivery_quantity, @delivery_percentage, @created_at
+)
+ON CONFLICT (symbol, series, created_at)
+DO UPDATE SET
+    previous_close = EXCLUDED.previous_close,
+    open = EXCLUDED.open,
+    high = EXCLUDED.high,
+    low = EXCLUDED.low,
+    last = EXCLUDED.last,
+    close = EXCLUDED.close,
+    average_price = EXCLUDED.average_price,
+    volume = EXCLUDED.volume,
+    turn_over_lacs = EXCLUDED.turn_over_lacs,
+    no_of_trades = EXCLUDED.no_of_trades,
+    delivery_quantity = EXCLUDED.delivery_quantity,
+    delivery_percentage = EXCLUDED.delivery_percentage;
+";
+
+
+                await using var conn = _createConnection();
+                await conn.OpenAsync();
+
+                await using var batch = new NpgsqlBatch(conn);
+
+                foreach (var data in entities)
+                {
+
+                    var cmd = new NpgsqlBatchCommand(query);
+
+
+                    cmd.Parameters.AddWithValue("symbol", data.SYMBOL);
+                    cmd.Parameters.AddWithValue("series", data.SERIES);
+                    cmd.Parameters.AddWithValue("previous_close", data.PREV_CLOSE);
+                    cmd.Parameters.AddWithValue("open", data.OPEN_PRICE);
+                    cmd.Parameters.AddWithValue("high", data.HIGH_PRICE);
+                    cmd.Parameters.AddWithValue("low", data.LOW_PRICE);
+                    cmd.Parameters.AddWithValue("last", data.LAST_PRICE);
+                    cmd.Parameters.AddWithValue("close", data.CLOSE_PRICE);
+                    cmd.Parameters.AddWithValue("average_price", data.AVG_PRICE);
+                    cmd.Parameters.AddWithValue("volume", data.TTL_TRD_QNTY);
+                    cmd.Parameters.AddWithValue("turn_over_lacs", data.TURNOVER_LACS);
+                    cmd.Parameters.AddWithValue("no_of_trades", data.NO_OF_TRADES);
+                    cmd.Parameters.AddWithValue("delivery_quantity", data.DELIV_QTY);
+                    cmd.Parameters.AddWithValue("delivery_percentage", data.DELIV_PER);
+                    cmd.Parameters.AddWithValue("created_at", Convert.ToDateTime(data.DATE1));
+                    batch.BatchCommands.Add(cmd);
+                }
+
+                await batch.ExecuteNonQueryAsync();
+
+                Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
+            }
+            catch (Exception ex)
+            {
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
+            }
+
+        }
         public async Task Nse_Eq_Stock_Orb_InsertAsync(List<RangeBreakoutCurrent> current_data)
         {
             try
