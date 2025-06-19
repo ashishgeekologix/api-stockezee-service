@@ -9,6 +9,7 @@
         public dynamic company_peers { get; set; }
         public dynamic company_financials { get; set; }
         public dynamic company_shareholding { get; set; }
+        public dynamic company_performance { get; set; }
 
         public StockAnalysisData()
         {
@@ -18,6 +19,7 @@
             company_peers = null;
             company_financials = null;
             company_shareholding = null;
+            company_performance = null;
         }
     }
 }
