@@ -146,6 +146,18 @@ namespace api_stockezee_service.RedisService
                 }
 
             });
+
+            await subscriber.SubscribeAsync(RedisChannel.Literal("nse_india_company_profile"), async (channel, message) =>
+            {
+                // Handle received message
+                message = CompressionHelper.DecompressFromBase64(message);
+                var entities = JsonConvert.DeserializeObject<List<NseIndiaCompanyProfileData>>(message);
+                if (entities.Any())
+                {
+                    await _bulkInsertService.Nse_India_Company_Profile_InsertAsync(entities);
+                    Console.WriteLine($"Inserted {entities.Count} records into PostgreSQL.");
+                }
+            });
         }
     }
 }

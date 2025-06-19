@@ -31,7 +31,11 @@ namespace api_stockezee_service.Service
         FROM public.nse_eq_stock_data_intraday_daily
         WHERE symbol_name = @symbol;
         
-        select  cd.*,cp.industry,cp.sector From nse_company_details cd inner join nse_company_profile cp on cd.symbol_name
+        select  cd.*,cp.industry,cp.sector,CASE 
+        WHEN cp.total_market_cap >= 50000 THEN 'Large Cap'
+        WHEN cp.total_market_cap >= 10000 THEN 'Mid Cap'
+        ELSE 'Small Cap'
+    END AS cap_category From nse_company_details cd inner join nse_company_profile cp on cd.symbol_name
                 =cp.symbol_name   where cd.symbol_name= @symbol;
         select * From public.nse_company_peers where parent_symbol_name=@symbol;
         select * From public.nse_company_financials where symbol_name=@symbol order by period asc;

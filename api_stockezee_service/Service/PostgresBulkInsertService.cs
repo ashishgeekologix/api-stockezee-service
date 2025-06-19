@@ -507,6 +507,9 @@ DO UPDATE SET
             }
 
         }
+
+
+
         public async Task Nse_Eq_Stock_Orb_InsertAsync(List<RangeBreakoutCurrent> current_data)
         {
             try
@@ -669,6 +672,92 @@ DO UPDATE SET
             {
                 await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
             }
+        }
+
+
+        public async Task Nse_India_Company_Profile_InsertAsync(List<NseIndiaCompanyProfileData> entities)
+        {
+            try
+            {
+                var query = @"
+            INSERT INTO public.nse_company_profile (
+                symbol_name, company_name, isin, identifier, is_municipal_bond,
+                series, last_update_time, board_status, trading_status, listing_date,
+                pd_sector_pe, pd_symbol_pe, pd_sector_ind, industry, sector, basic_industry,
+                total_market_cap, ffmc, created_at, ""time""
+            ) VALUES (
+                @symbol_name, @company_name, @isin, @identifier, @is_municipal_bond,
+                @series, @last_update_time, @board_status, @trading_status, @listing_date,
+                @pd_sector_pe, @pd_symbol_pe, @pd_sector_ind, @industry, @sector, @basic_industry,
+                @total_market_cap, @ffmc, @created_at, @time
+            )
+            ON CONFLICT (symbol_name) DO UPDATE SET
+                company_name = EXCLUDED.company_name,
+                isin = EXCLUDED.isin,
+                identifier = EXCLUDED.identifier,
+                is_municipal_bond = EXCLUDED.is_municipal_bond,
+                series = EXCLUDED.series,
+                last_update_time = EXCLUDED.last_update_time,
+                board_status = EXCLUDED.board_status,
+                trading_status = EXCLUDED.trading_status,
+                listing_date = EXCLUDED.listing_date,
+                pd_sector_pe = EXCLUDED.pd_sector_pe,
+                pd_symbol_pe = EXCLUDED.pd_symbol_pe,
+                pd_sector_ind = EXCLUDED.pd_sector_ind,
+                industry = EXCLUDED.industry,
+                sector = EXCLUDED.sector,
+                basic_industry = EXCLUDED.basic_industry,
+                total_market_cap = EXCLUDED.total_market_cap,
+                ffmc = EXCLUDED.ffmc,
+                created_at = EXCLUDED.created_at,
+                ""time"" = EXCLUDED.""time"" ;
+";
+
+
+                await using var conn = _createConnection();
+                await conn.OpenAsync();
+
+                await using var batch = new NpgsqlBatch(conn);
+
+                foreach (var data in entities)
+                {
+
+                    var cmd = new NpgsqlBatchCommand(query);
+
+
+                    cmd.Parameters.AddWithValue("@symbol_name", (object?)data.symbol ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@company_name", (object?)data.company_name ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@isin", (object?)data.isin ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@identifier", (object?)data.identifier ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@is_municipal_bond", data.is_municipal_bond);
+                    cmd.Parameters.AddWithValue("@series", (object?)data.series ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@last_update_time", (object?)data.last_update_time ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@board_status", (object?)data.board_status ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@trading_status", (object?)data.trading_status ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@listing_date", (object?)Convert.ToDateTime(data.listing_date) ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@pd_sector_pe", (object?)data.pd_sector_pe ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@pd_symbol_pe", (object?)data.pd_symbol_pe ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@pd_sector_ind", (object?)data.pd_sector_ind ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@industry", (object?)data.industry ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@sector", (object?)data.sector ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@basic_industry", (object?)data.basic_industry ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@total_market_cap", (object?)data.total_market_cap ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ffmc", (object?)data.ffmc ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@created_at", DateTime.UtcNow.Date);  // Or DateTime.Today for local time
+                    cmd.Parameters.AddWithValue("@time", DateTime.UtcNow.TimeOfDay);
+
+                    batch.BatchCommands.Add(cmd);
+                }
+
+                await batch.ExecuteNonQueryAsync();
+
+                Console.WriteLine($"Inserted {entities.Count} ticks at {DateTime.Now}");
+            }
+            catch (Exception ex)
+            {
+                await _log.LogExceptionAsync("ERROR", GetType().Name, ex.Message, ex.StackTrace);
+            }
+
         }
 
     }
