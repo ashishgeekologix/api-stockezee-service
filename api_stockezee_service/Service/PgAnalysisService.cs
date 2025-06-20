@@ -42,7 +42,7 @@ namespace api_stockezee_service.Service
         select * From public.nse_company_shareholding where symbol_name=@symbol order by period asc;
         
         ;WITH ranked_data AS (
-        select symbol_name,last_trade_price close,created_at,0 rn From nse_eq_stock_data_daily where symbol_name='RELIANCE'
+        select symbol_name,last_trade_price close,created_at,0 rn From nse_eq_stock_data_daily where symbol_name=@symbol
 		UNION ALL
 		SELECT 
     	symbol symbol_name,
