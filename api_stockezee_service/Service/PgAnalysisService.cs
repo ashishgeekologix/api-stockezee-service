@@ -77,7 +77,9 @@ namespace api_stockezee_service.Service
                   ROUND(((close_today - close_1y) / close_1y) * 100, 2) AS pct_1y
                 FROM reference_prices ;
 
-                select volume,delivery_percentage,created_at From nse_bhav_copy where symbol=@symbol order by created_at desc limit 20
+                select volume,delivery_percentage,created_at From nse_bhav_copy where symbol=@symbol order by created_at desc limit 20;
+
+                select company_bio From nse_company_bio where symbol_name=@symbol ;
 
     
                             ";
@@ -92,7 +94,7 @@ namespace api_stockezee_service.Service
                 resQuote.ResultData.company_shareholding = await multi.ReadAsync<dynamic>();
                 resQuote.ResultData.company_performance = await multi.ReadFirstOrDefaultAsync<dynamic>();
                 resQuote.ResultData.company_volume = await multi.ReadAsync<dynamic>();
-
+                resQuote.ResultData.company_about = await multi.ReadFirstOrDefaultAsync<dynamic>();
 
                 if (resQuote.ResultData is null)
                 {

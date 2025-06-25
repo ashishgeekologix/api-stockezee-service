@@ -11,6 +11,7 @@
         public dynamic company_shareholding { get; set; }
         public dynamic company_performance { get; set; }
         public dynamic company_volume { get; set; }
+        public dynamic company_about { get; set; }
 
         public StockAnalysisData()
         {
@@ -22,6 +23,7 @@
             company_shareholding = null;
             company_performance = null;
             company_volume = null;
+            company_about = null;
         }
     }
 }
