@@ -13,6 +13,9 @@
         public dynamic company_volume { get; set; }
         public dynamic company_about { get; set; }
 
+        public dynamic company_high_low_snapshot { get; set; }
+
+
         public StockAnalysisData()
         {
             spot_price = null;
@@ -24,6 +27,7 @@
             company_performance = null;
             company_volume = null;
             company_about = null;
+            company_high_low_snapshot = null;
         }
     }
 }

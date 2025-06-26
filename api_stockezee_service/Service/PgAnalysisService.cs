@@ -102,6 +102,8 @@ WHERE t.symbol_name = @symbol;
                 select volume,delivery_percentage,created_at From nse_bhav_copy where symbol=@symbol order by created_at desc limit 20;
 
                 select company_bio From nse_company_bio where symbol_name=@symbol ;
+                
+                select symbol_name,high,low,volume,time From public.nse_eq_stock_data_intraday_daily where symbol_name=@symbol and time IN ('09:30:00','09:45:00','10:00:00','11:00:00','12:00:00','13:00:00','14:00:00','15:00:00') ;
 
     
                             ";
@@ -117,6 +119,7 @@ WHERE t.symbol_name = @symbol;
                 resQuote.ResultData.company_performance = await multi.ReadFirstOrDefaultAsync<dynamic>();
                 resQuote.ResultData.company_volume = await multi.ReadAsync<dynamic>();
                 resQuote.ResultData.company_about = await multi.ReadFirstOrDefaultAsync<dynamic>();
+                resQuote.ResultData.company_high_low_snapshot = await multi.ReadAsync<dynamic>();
 
                 if (resQuote.ResultData is null)
                 {
