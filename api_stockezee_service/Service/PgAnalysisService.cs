@@ -21,9 +21,31 @@ namespace api_stockezee_service.Service
             try
             {
 
-                var sql = @" SELECT symbol_name, open, high, low, close, change, change_percent, last_trade_price, volume, time,high52,low52
-        FROM public.nse_eq_stock_data_daily
-        WHERE symbol_name = @symbol;
+                var sql = @" SELECT 
+    t.symbol_name, 
+    t.open, 
+    t.high, 
+    t.low, 
+    t.close, 
+    t.change, 
+    t.change_percent, 
+    t.last_trade_price, 
+    t.volume, 
+    t.time, 
+    t.high52, 
+    t.low52,
+    h.high AS prev_day_high,
+    h.low AS prev_day_low
+FROM public.nse_eq_stock_data_daily t
+LEFT JOIN LATERAL (
+    SELECT high, low
+    FROM public.nse_eq_stock_historical_daily h
+    WHERE h.symbol_name = t.symbol_name
+      AND h.created_at <t.created_at
+    ORDER BY h.created_at DESC
+    LIMIT 1
+) h ON true
+WHERE t.symbol_name = @symbol;
 
         SELECT 
             string_agg(to_char(time, 'HH24:MI:SS'), ',' ORDER BY time) AS time_csv,
