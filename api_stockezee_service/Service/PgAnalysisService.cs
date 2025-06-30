@@ -39,8 +39,8 @@ namespace api_stockezee_service.Service
 FROM public.nse_eq_stock_data_daily t
 LEFT JOIN LATERAL (
     SELECT high, low
-    FROM public.nse_eq_stock_historical_daily h
-    WHERE h.symbol_name = t.symbol_name
+    FROM public.nse_bhav_copy h
+    WHERE h.symbol = t.symbol_name
       AND h.created_at <t.created_at
     ORDER BY h.created_at DESC
     LIMIT 1
